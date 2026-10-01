@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="manta">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MantaLink — Mockup web</title>
+<meta name="description" content="Mockup del portal digital comunitario MantaLink.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<a href="#/home" class="skip-link" data-i18n="skipLink">Saltar al contenido</a>
+
+<div class="flagbar" aria-hidden="true"></div>
+
+<header>
+  <div class="headrow">
+    <div class="logo" data-s="home"><span class="logo-name">Manta<span>Link</span></span></div>
+    <div class="more-menu" id="moreMenu">
+      <button class="icon-btn more-toggle" id="moreToggle" aria-haspopup="true" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+        <span data-i18n="masBtn">Más</span>
+      </button>
+      <div class="more-dropdown" id="moreDropdown">
+        <button data-s="ayuda" class="icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span data-i18n="navAyuda">Ayuda</span>
+        </button>
+        <button data-s="config" class="icon-btn gear-btn" title="Configuración" aria-label="Configuración">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="gear-icon" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span data-i18n="cfgTitle">Configuración</span>
+        </button>
+      </div>
+    </div>
+    <button class="menu-toggle" id="menuToggle" aria-label="Abrir menú" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <nav class="mainnav" id="mainnav">
+      <button data-s="home" class="active"><svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span data-i18n="navInicio">Inicio</span></button>
+      <button data-s="servicios" data-i18n="navServicios">Servicios</button>
+      <button data-s="publicar" id="navVender" hidden><span class="nav-ico" aria-hidden="true">+</span><span data-i18n="navVender">Vender</span></button>
+      <button data-s="favoritos" id="navFavoritos" hidden>♥ Favoritos</button>
+      <button data-s="perfil" id="navPerfil" class="icon-btn" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="17" height="17" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+        <span data-i18n="navPerfil">Perfil</span>
+      </button>
+      <button data-s="admin" id="navAdmin" hidden>🛠 Admin</button>
+      <button data-s="login" id="navLogin" data-i18n="navIngresar">Ingresar</button>
+    </nav>
+  </div>
+</header>
+
+<main id="contenido">
+
+  <!-- INICIO -->
+  <section class="screen active" id="inicio">
+    <div class="hero">
+      <h2 data-i18n="heroTitle">¿Qué necesitas encontrar hoy en Manta?</h2>
+      <div class="searchbar">
+        <div class="search-input-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+          <input id="buscador" data-i18n-ph="buscarPh" placeholder="Buscar producto o servicio…">
+        </div>
+        <button class="btn btn-outline" id="btnFiltrosAvanzados" type="button"><svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16l-6.5 7.2v5.1l-3 1.7v-6.8L4 5z"/></svg>Filtros avanzados</button>
+      </div>
+      <div class="adv-filters" id="advFilters" hidden>
+        <p class="adv-filters-title">Elige una o varias categorías, y si quieres, una búsqueda más específica dentro de ellas.</p>
+        <div class="field">
+          <label for="filtroUbicacion">Vereda o sector</label>
+          <select id="filtroUbicacion"></select>
+        </div>
+        <div class="adv-filters-cats" id="advFiltersCats"></div>
+        <div class="field" id="advSubField" hidden>
+          <label for="advSubtipo">Búsqueda específica</label>
+          <select id="advSubtipo"><option value="">Cualquiera</option></select>
+        </div>
+        <div class="adv-filters-actions">
+          <button class="btn btn-outline" id="btnLimpiarFiltros" type="button">Limpiar</button>
+          <button class="btn btn-primary" id="btnAplicarFiltros" type="button">Aplicar filtros</button>
+        </div>
+      </div>
+
+      <div class="chips-row">
+        <button class="chips-arrow" id="chipsPrev" aria-label="Ver categorías anteriores">‹</button>
+        <div class="chips" id="chips"></div>
+        <button class="chips-arrow" id="chipsNext" aria-label="Ver más categorías">›</button>
+      </div>
+    </div>
+
+    <div class="section-title"><h3 data-i18n="destacados">Destacados esta semana</h3></div>
+    <div class="grid" id="grid-productos"></div>
+  </section>
+
+  <!-- DETALLE -->
+  <section class="screen" id="detalle">
+    <button class="back" id="backBtn" data-i18n="volver">← Volver al catálogo</button>
+    <div class="detail" id="detalle-body"></div>
+  </section>
+
+  <!-- PERFIL PÚBLICO DEL PRODUCTOR -->
+  <section class="screen" id="perfil-vendedor">
+    <button class="back" id="backPerfilVendedor">← Volver</button>
+    <div id="perfilVendedorContenido"></div>
+  </section>
+
+  <!-- LOGIN -->
+  <section class="screen" id="login">
+    <div class="authbox">
+      <h3 style="margin-bottom:6px" data-i18n="loginTitle">Ingresar a tu cuenta</h3>
+      <p style="color:var(--ink-soft); font-size:.9rem; margin:0 0 18px" data-i18n="loginDesc">Para publicar y gestionar tus productos.</p>
+      <div class="field"><label for="loginCorreo">Correo o teléfono</label><input id="loginCorreo" placeholder="ana@correo.com"></div>
+      <div class="field"><label for="loginPass">Contraseña</label><input id="loginPass" type="password" placeholder="••••••••"></div>
+      <button class="btn btn-primary" style="width:100%; justify-content:center" id="btnLogin" data-i18n="navIngresar">Ingresar</button>
+      <p style="text-align:center; margin-top:14px; font-size:.86rem">
+        <span class="link" id="olvide" tabindex="0" role="button">¿Olvidaste tu contraseña?</span>
+      </p>
+      <p style="text-align:center; margin-top:6px; font-size:.86rem">¿No tienes cuenta? <span class="link" data-s="registro">Regístrate aquí</span></p>
+    </div>
+  </section>
+
+  <!-- REGISTRO -->
+  <section class="screen" id="registro">
+    <div class="authbox">
+      <h3 style="margin-bottom:6px">Crear tu cuenta</h3>
+      <p style="color:var(--ink-soft); font-size:.9rem; margin:0 0 18px">Solo lo necesario para empezar a vender.</p>
+      <div class="field"><label for="regNombre">Nombre completo <span class="req">*</span></label><input id="regNombre" placeholder="Ana Pérez"></div>
+      <div class="field-row">
+        <div class="field"><label for="regTipoDoc">Tipo de documento <span class="req">*</span></label>
+          <select id="regTipoDoc"><option>Cédula de ciudadanía</option><option>Tarjeta de identidad</option><option>Cédula de extranjería</option><option>Otro</option></select>
+        </div>
+        <div class="field"><label for="regNumDoc">Número de documento <span class="req">*</span></label><input id="regNumDoc" placeholder="10023..."></div>
+      </div>
+      <div class="field"><label for="regPass">Contraseña <span class="req">*</span></label><input id="regPass" type="password" placeholder="••••••••"></div>
+      <div class="field"><label for="regPass2">Confirmar contraseña <span class="req">*</span></label><input id="regPass2" type="password" placeholder="••••••••"></div>
+      <div class="field"><label for="regTel">Número de teléfono</label><input id="regTel" placeholder="300 000 0000"></div>
+      <div class="field"><label for="regCorreo">Correo electrónico <span class="req">*</span></label><input id="regCorreo" placeholder="ana@correo.com"></div>
+      <div class="field"><label for="regVereda">Vereda o barrio donde resides en Manta <span class="req">*</span></label><select id="regVereda"></select></div>
+      <div class="field-check">
+        <input type="checkbox" id="chkResidente">
+        <label for="chkResidente">Confirmo que resido en el municipio de Manta, Cundinamarca.</label>
+      </div>
+      <p style="font-size:.8rem; color:var(--ink-soft); margin:-6px 0 14px">MantaLink es exclusivo para habitantes del municipio. Al registrarte verás tu cuenta como <strong>pendiente</strong>; en este mockup, al iniciar sesión se marcará como verificada y podrás publicar.</p>
+      <button class="btn btn-primary" style="width:100%; justify-content:center" id="btnRegistro">Crear cuenta</button>
+    </div>
+  </section>
+
+  <!-- VENDER -->
+  <section class="screen" id="publicar">
+    <div class="verification-notice" id="avisoVerificacionPublicar" role="status" hidden>
+      <h4>Tu cuenta está pendiente de verificación</h4>
+      <p>Inicia sesión para verificar tu cuenta en este mockup. Después podrás publicar productos y servicios.</p>
+    </div>
+    <div class="section-title"><h3 data-i18n="misProductos">Mis productos</h3></div>
+    <div class="sell-cta" id="cta-vender" tabindex="0" role="button">
+      <strong data-i18n="ctaVender">+ Publicar producto o servicio</strong>
+      <p style="color:var(--ink-soft); font-size:.87rem; margin:6px 0 0" data-i18n="ctaVenderSub">Publica lo que ofreces en menos de un minuto.</p>
+    </div>
+    <div id="lista-mis-productos"></div>
+  </section>
+
+  <!-- PUBLICAR / EDITAR PRODUCTO O SERVICIO -->
+  <section class="screen" id="publicar-form">
+    <button class="back" id="backPublicarBtn" data-i18n="volverVender">← Volver a mis publicaciones</button>
+
+    <div class="publish-card">
+      <div class="publish-head">
+        <h3 id="publishTitle" data-i18n="publicarTitle">Publicar producto o servicio</h3>
+        <button class="btn-save guardar-publicacion" data-i18n="guardarCambios">Guardar cambios</button>
+      </div>
+
+      <div class="field-label-standalone" data-i18n="fotosLbl">Fotos del producto (máximo 5)</div>
+      <div class="photo-grid" id="photoGrid"></div>
+      <input type="file" id="fotoInput" accept="image/*" multiple hidden>
+
+      <p class="mercader-line"><span data-i18n="mercaderLbl">Mercader:</span> <strong id="mercaderNombre">Pepito Pérez</strong></p>
+
+      <div class="field">
+        <label for="pubTipo" data-i18n="tipoLbl">Producto</label>
+        <select id="pubTipo"></select>
+      </div>
+      <div class="field">
+        <label for="pubUbicacion">Vereda o sector donde ofreces este producto</label>
+        <select id="pubUbicacion"></select>
+      </div>
+
+      <div class="field" id="subtipoField" hidden>
+        <label for="pubSubtipo" data-i18n="subtipoLbl">Tipo específico</label>
+        <select id="pubSubtipo"></select>
+      </div>
+
+      <div class="field field-editable">
+        <label for="pubNombre" data-i18n="nombreProductoLbl">Nombre del producto</label>
+        <input id="pubNombre" data-i18n-ph="nombreProductoPh" placeholder="Ej: Panela orgánica">
+        <svg class="pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+      </div>
+
+      <div class="field-row">
+        <div class="field"><label for="pubPrecio" data-i18n="precioLbl">Precio</label><input id="pubPrecio" data-i18n-ph="precioPh" placeholder="Ej: $8.000 libra"></div>
+        <div class="field" id="diasFieldWrap">
+          <label for="pubDias" data-i18n="diasLbl">Días de publicación</label>
+          <input id="pubDias" type="number" min="1" step="1">
+          <p id="diasHint" class="field-hint"></p>
+        </div>
+      </div>
+      <div class="field" id="fechaEventoField" hidden>
+        <label for="pubFechaEvento">Fecha del evento</label>
+        <input type="date" id="pubFechaEvento">
+        <p class="field-hint">Al pasar esta fecha, el evento se quita solo del catálogo.</p>
+      </div>
+
+      <div class="field field-editable">
+        <label for="pubInfo" data-i18n="infoLbl">Información sobre el producto</label>
+        <textarea id="pubInfo" rows="3" data-i18n-ph="infoPh" placeholder="Cuéntale a la comunidad qué ofreces…"></textarea>
+        <svg class="pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+      </div>
+
+      <div class="field field-editable">
+        <label for="pubNotas" data-i18n="notasLbl">Notas (opcional)</label>
+        <input id="pubNotas" data-i18n-ph="notasPh" placeholder="Ej: solo domicilios los fines de semana">
+        <svg class="pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+      </div>
+
+      <h4 class="contact-title" data-i18n="contactoMercader">Contacto del mercader</h4>
+      <div class="contact-readonly" id="contactoResumen"></div>
+      <p class="settings-note"><span data-i18n="contactoNota">Estos datos se toman de tu perfil.</span> <span class="link" data-s="perfil" data-i18n="editarEnPerfil">Editar en tu perfil</span></p>
+
+      <p class="settings-note" data-i18n="referenciasNote">✰✰✰✰✰ Las estrellas de referencia reflejan tu reputación como mercader (las genera la comunidad con sus reseñas) — no se editan aquí.</p>
+
+      <button class="btn btn-primary guardar-publicacion" style="width:100%; justify-content:center; margin-top:4px" data-i18n="guardarCambios">Guardar cambios</button>
+    </div>
+  </section>
+
+  <!-- FAVORITOS (pantalla propia, no es una vista filtrada del inicio) -->
+  <section class="screen" id="favoritos-info">
+    <button class="back" data-s="home">← Volver al inicio</button>
+    <div class="section-title"><h3>♥ Mis favoritos</h3></div>
+    <div class="grid" id="grid-favoritos"></div>
+  </section>
+
+  <!-- SERVICIOS -->
+  <section class="screen" id="servicios-info">
+    <div class="section-title"><h3 data-i18n="serviciosTitle">Servicios comunitarios</h3></div>
+    <p style="color:var(--ink-soft); max-width:60ch" data-i18n="serviciosDesc">Además de productos, en MantaLink puedes ofrecer o encontrar servicios como transporte, talleres y hospedaje rural.</p>
+    <div class="grid" id="grid-servicios" style="margin-top:18px"></div>
+  </section>
+
+  <!-- AYUDA -->
+  <section class="screen" id="ayuda">
+    <div class="section-title"><h3 data-i18n="ayudaTitle">Centro de ayuda</h3></div>
+    <div class="help-item"><h4>¿Cómo publico un producto?</h4><p style="margin:0; color:var(--ink-soft)">Entra a "Vender", toca "+ Vender producto" y completa nombre, foto, precio y tu contacto.</p></div>
+    <div class="help-item"><h4>¿Cómo contacto a un vendedor?</h4><p style="margin:0; color:var(--ink-soft)">Abre el producto que te interesa y usa el botón "Contactar por WhatsApp" o "Llamar al productor".</p></div>
+    <div class="help-item"><h4>¿Quién puede crear una cuenta?</h4><p style="margin:0; color:var(--ink-soft)">Solo los habitantes de Manta, Cundinamarca. Al registrarte confirmas tu vereda o barrio, y tu cuenta queda en verificación antes de poder publicar.</p></div>
+    <div class="help-item"><h4>¿MantaLink cobra alguna comisión?</h4><p style="margin:0; color:var(--ink-soft)">No. El portal solo conecta a compradores y vendedores; el acuerdo de venta se hace directamente entre ustedes.</p></div>
+  </section>
+
+  <!-- PERFIL -->
+  <section class="screen" id="perfil">
+    <div class="profile-card">
+      <div class="profile-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+      <h3 id="perfilNombreDisplay">Pepito Pérez Pérez</h3>
+      <p id="perfilRol" style="color:var(--ink-soft); font-size:.87rem" data-i18n="emprendedorManta">Emprendedor · Manta</p>
+      <span class="badge" id="perfilEstado">⏳ Cuenta en verificación</span>
+
+      <button class="btn btn-outline" style="width:100%; justify-content:center; margin-top:18px" id="btnEditarPerfil">✎ Editar perfil</button>
+
+      <div id="perfilEditWrap" hidden>
+        <h4 class="contact-title" data-i18n="misDatos">Mis datos</h4>
+        <div class="field"><label for="perfilNombre" data-i18n="nombreLbl">Nombre completo</label><input id="perfilNombre"></div>
+        <div class="field"><label for="perfilTelefono" data-i18n="telefonoLbl">Teléfono</label><input id="perfilTelefono"></div>
+        <div class="field"><label for="perfilCorreo" data-i18n="correoLbl">Correo</label><input id="perfilCorreo"></div>
+        <div class="field"><label for="perfilVereda" data-i18n="veredaLbl">Vereda/barrio</label><input id="perfilVereda"></div>
+
+        <h4 class="contact-title" data-i18n="redesTitle">Redes sociales (para tu marketing)</h4>
+        <div class="field"><label for="perfilInstagram">Instagram</label><input id="perfilInstagram" placeholder="@tuusuario"></div>
+        <div class="field"><label for="perfilFacebook">Facebook</label><input id="perfilFacebook" placeholder="/tupagina"></div>
+        <div class="field"><label for="perfilTiktok">TikTok</label><input id="perfilTiktok" placeholder="@tuusuario"></div>
+
+        <button class="btn btn-primary" style="width:100%; justify-content:center; margin-top:6px" id="btnGuardarPerfil" data-i18n="guardarCambios">Guardar cambios</button>
+      </div>
+
+      <button class="btn btn-outline" style="width:100%; justify-content:center; margin-top:10px" id="btnLogout" data-i18n="cerrarSesion">Cerrar sesión</button>
+    </div>
+
+    <div class="sell-cta" id="cta-vender-perfil" tabindex="0" role="button" style="max-width:440px; margin:18px auto 0">
+      <strong data-i18n="ctaVender">+ Publicar producto o servicio</strong>
+      <p style="color:var(--ink-soft); font-size:.87rem; margin:6px 0 0" data-i18n="ctaVenderSub">Publica lo que ofreces en menos de un minuto.</p>
+    </div>
+  </section>
+
+  <!-- CONFIGURACIÓN -->
+  <section class="screen" id="config">
+    <div class="section-title"><h3 data-i18n="cfgTitle">Configuración</h3></div>
+    <div class="settings-card">
+      <button class="btn btn-outline" id="btnRestaurarConfig" style="width:100%; justify-content:center; margin-bottom:22px" data-i18n="restaurarBtn">↺ Restaurar valores por defecto</button>
+      <h4 data-i18n="cfgTheme">Tema de color</h4>
+      <div class="theme-options">
+        <button class="theme-opt" data-theme-btn="manta"><span class="swatch swatch-flag"></span><span data-i18n="cfgThemeManta">Manta (predeterminado)</span></button>
+        <button class="theme-opt" data-theme-btn="oscuro"><span class="swatch" style="background:#10141C"></span><span data-i18n="cfgThemeOscuro">Modo oscuro</span></button>
+        <button class="theme-opt" data-theme-btn="clasico"><span class="swatch" style="background:#2E5D45"></span><span data-i18n="cfgThemeClasico">Verde clásico</span></button>
+      </div>
+
+      <h4 data-i18n="cfgTextSize">Tamaño de letra</h4>
+      <div class="seg">
+        <button data-size-btn="normal" data-i18n="cfgNormal">Normal</button>
+        <button data-size-btn="grande" data-i18n="cfgGrande">Grande</button>
+      </div>
+
+      <h4 data-i18n="cfgLang">Idioma</h4>
+      <div class="seg">
+        <button data-lang-btn="es">Español</button>
+        <button data-lang-btn="en">English</button>
+      </div>
+
+      <h4 data-i18n="cfgA11y">Accesibilidad</h4>
+      <label class="switch-row" for="a11yFabToggle">
+        <span data-i18n="cfgA11yFab">Botón flotante "A+" para agrandar la letra</span>
+        <span class="switch">
+          <input type="checkbox" id="a11yFabToggle" checked>
+          <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+        </span>
+      </label>
+
+      <p class="settings-note" data-i18n="cfgNote">Estas preferencias se guardan en este dispositivo. La traducción completa del contenido aún está en desarrollo; por ahora se traduce la navegación principal.</p>
+    </div>
+  </section>
+
+  <!-- ADMIN (solo entra admin@mail.com / admin) -->
+  <section class="screen" id="admin">
+    <div class="section-title"><h3>Panel de administración</h3></div>
+    <p style="color:var(--ink-soft); max-width:60ch; margin-bottom:20px">Indicadores de seguimiento del proyecto y herramientas de administración.</p>
+
+    <section class="bsc-section" aria-labelledby="bscTitle">
+      <div class="bsc-heading">
+        <div>
+          <h4 id="bscTitle">Balanced Scorecard</h4>
+          <p>Seguimiento de las cuatro perspectivas estratégicas.</p>
+        </div>
+        <span class="bsc-demo-label">Avances simulados</span>
+      </div>
+      <div class="bsc-grid" id="bscIndicators"></div>
+    </section>
+
+    <h4 class="admin-tools-title">Gestión de la plataforma</h4>
+
+    <div class="admin-dash" id="adminDash">
+      <button class="admin-card" data-vista="pendientes">
+        <span class="admin-card-n" id="nPendientes">0</span>
+        <span>Cuentas pendientes</span>
+      </button>
+      <button class="admin-card" data-vista="reportadas">
+        <span class="admin-card-n" id="nReportadas">0</span>
+        <span>Publicaciones reportadas</span>
+      </button>
+      <button class="admin-card" data-vista="publicaciones">
+        <span class="admin-card-n" id="nPublicaciones">0</span>
+        <span>Todas las publicaciones</span>
+      </button>
+      <button class="admin-card" data-vista="categorias">
+        <span class="admin-card-n" id="nCategorias">0</span>
+        <span>Categorías</span>
+      </button>
+    </div>
+
+    <div id="adminVistaWrap" hidden>
+      <button class="back" id="btnVolverDash">← Volver al panel</button>
+      <div id="adminVistaContenido"></div>
+    </div>
+
+    <button class="btn btn-outline" style="width:100%; justify-content:center; margin-top:26px" id="btnLogoutAdmin">Cerrar sesión de administrador</button>
+  </section>
+
+</main>
+
+<nav class="bottom-nav" id="bottomNav">
+  <button data-s="home" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+    <span data-i18n="navInicio">Inicio</span>
+  </button>
+  <button data-s="publicar" id="bnVender" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <span data-i18n="navVender">Vender</span>
+  </button>
+  <button data-s="perfil" id="bnPerfil" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+    <span data-i18n="navPerfil">Perfil</span>
+  </button>
+  <button data-s="login" id="bnLogin">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+    <span data-i18n="navIngresar">Ingresar</span>
+  </button>
+</nav>
+
+<button id="a11yBtn" class="a11y-fab" aria-label="Aumentar tamaño de letra">A+</button>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
