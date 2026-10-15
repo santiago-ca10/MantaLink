@@ -1,0 +1,31 @@
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: mantalink
+      POSTGRES_PASSWORD: mantalink
+      POSTGRES_DB: mantalink
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mantalink -d mantalink"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
+  backend:
+    build: ./backend
+    depends_on:
+      db: { condition: service_healthy }   # espera a que la base de datos esté lista
+    environment:
+      DATABASE_URL: postgres://mantalink:mantalink@db:5432/mantalink   # "db" = nombre del servicio de arriba
+      JWT_SECRET: clave-de-desarrollo-cambiar-en-produccion-0123456789
+      MODERACION_ACTIVA: "true"
+      ADMIN_CORREO: admin@mail.com
+      ADMIN_PASSWORD: admin
+      PORT: "3000"
+    ports: ["3000:3000"]
+
+volumes:
+  pgdata:

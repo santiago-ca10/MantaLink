@@ -1,0 +1,6 @@
+export * from './usuario.entity';
+export * from './categoria.entity';
+export * from './publicacion.entity';
+export * from './favorito.entity';
+export * from './reporte.entity';
+export * from './revision-moderacion.entity';
