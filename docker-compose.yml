@@ -1,4 +1,5 @@
-
+# Levanta TODO con un solo comando:  docker compose up --build   → abre http://localhost:8080
+# Base de datos (PostgreSQL) + API (NestJS) + web (React servido por nginx). Solo para DESARROLLO: las claves de aquí son de prueba.
 services:
   db:
     image: postgres:16
@@ -26,6 +27,11 @@ services:
       ADMIN_PASSWORD: admin
       PORT: "3000"
     ports: ["3000:3000"]
+
+  frontend:
+    build: ./frontend
+    depends_on: [backend]
+    ports: ["8080:80"]   # http://localhost:8080 (nginx reenvía /api al backend)
 
 volumes:
   pgdata:
