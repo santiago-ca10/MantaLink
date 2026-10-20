@@ -23,7 +23,9 @@ backend/
 │   │   ├── entities/            # las 6 clases del diagrama (tablas)
 │   │   └── seed/                # datos iniciales de ejemplo
 │   └── modules/                 # UNA carpeta por módulo (sección 6.4.2 del documento)
-│       ├── auth/                #   registro, login, perfil, cambiar contraseña
+│       ├── auth/                #   registro, login, perfil, cambiar y recuperar contraseña
+│       ├── archivos/            #   subida y descarga de fotos
+│       ├── correo/              #   envío de correos (SMTP, o consola en desarrollo)
 │       ├── publicaciones/       #   catálogo público + CRUD del productor
 │       ├── categorias/
 │       ├── favoritos/
@@ -77,8 +79,17 @@ Cuentas de prueba (solo desarrollo): `admin@mail.com / admin` y `productor.x@mai
 Además: `POST /api/publicaciones/:id/reportar` (público), `GET/POST/DELETE /api/favoritos`, `GET /api/admin/reportes`,
 `PATCH /api/admin/reportes/:id/resolver`, `POST /api/auth/cambiar-contrasena`.
 
+**Fotos:** `POST /api/archivos` (multipart, campo `archivo`, solo productores, JPG/PNG/WebP hasta 5 MB) devuelve `{ url: "/api/archivos/<uuid>.jpg" }`;
+esa ruta se manda luego en `imagenes` al crear/editar la oferta. `GET /api/archivos/:nombre` es público. Se valida el tipo
+REAL por los primeros bytes (no por la extensión), el nombre lo genera el servidor y se guardan en `UPLOADS_DIR` (volumen en Docker).
+
+**Recuperar contraseña (CU5):** `POST /api/auth/olvide-contrasena {correo}` (responde igual exista o no la cuenta) y
+`POST /api/auth/restablecer-contrasena {token, nueva}`. El enlace vence a los 30 min, sirve una vez, solo se guarda su hash y,
+al cambiar la clave, las sesiones anteriores dejan de valer. Sin `SMTP_HOST` el correo se imprime en la consola del backend
+(`docker compose logs backend`); para correo real ver `.env.example`.
+
 ## Pruebas
-`cd backend && npm test` — 14 pruebas de integración (necesita la BD `mantalink_test`).
+`cd backend && npm test` — 16 pruebas de integración (necesita la BD `mantalink_test`).
 
 ## Seguridad: qué hay y qué falta
 Hecho: hash bcrypt, JWT con rol/estado verificados en BD en cada petición (suspender tiene efecto inmediato), roles,
@@ -90,6 +101,6 @@ en vez de `synchronize`, copias de seguridad de la BD (RNF Respaldo) y que el fr
 ## Pendiente (en orden)
 1. Frontend React: catálogo, detalle, login/registro, publicar (portar del mockup)
 2. (hecho en API) panel de moderación en el frontend
-3. Subida real de imágenes (servicio de almacenamiento por definir)
-4. Recuperar/cambiar contraseña, formulario de contacto, política de privacidad
+3. (hecho) subida de imágenes · (hecho) recuperar contraseña
+4. Gestión de categorías y usuarios (admin), editar perfil, formulario de contacto, limpiar fotos huérfanas
 5. Migraciones (hoy `synchronize` crea las tablas), pruebas, despliegue

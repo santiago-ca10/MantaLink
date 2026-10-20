@@ -33,7 +33,7 @@ export default function Ingresar() {
         <ErrorMensaje texto={error} />
         <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={enviando}>{enviando ? 'Ingresando…' : 'Ingresar'}</button>
         <p style={{ textAlign: 'center', marginBottom: 0 }}>¿No tienes cuenta? <Link to="/registro" className="link">Regístrate</Link></p>
-        <p className="settings-note" style={{ textAlign: 'center' }}>¿Olvidaste tu contraseña? Por ahora escríbele a un administrador del portal.</p>
+        <p style={{ textAlign: 'center' }}><Link to="/olvide-contrasena" className="link">¿Olvidaste tu contraseña?</Link></p>
       </form>
     </section>
   );

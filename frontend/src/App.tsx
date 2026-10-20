@@ -8,6 +8,8 @@ import Inicio from './pages/Inicio';
 // Las pantallas menos usadas se cargan solo cuando se visitan (la página inicial carga más rápido)
 const Detalle = lazy(() => import('./pages/Detalle'));
 const Ingresar = lazy(() => import('./pages/Ingresar'));
+const OlvideContrasena = lazy(() => import('./pages/OlvideContrasena'));
+const RestablecerContrasena = lazy(() => import('./pages/RestablecerContrasena'));
 const Registro = lazy(() => import('./pages/Registro'));
 const MisPublicaciones = lazy(() => import('./pages/MisPublicaciones'));
 const PublicacionForm = lazy(() => import('./pages/PublicacionForm'));
@@ -27,6 +29,8 @@ export default function App() {
           <Route index element={<Inicio />} />
           <Route path="oferta/:id" element={<Detalle />} />
           <Route path="ingresar" element={<Ingresar />} />
+          <Route path="olvide-contrasena" element={<OlvideContrasena />} />
+          <Route path="restablecer" element={<RestablecerContrasena />} />
           <Route path="registro" element={<Registro />} />
           <Route path="ayuda" element={<Ayuda />} />
           <Route path="privacidad" element={<Privacidad />} />

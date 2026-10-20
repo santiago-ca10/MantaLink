@@ -23,8 +23,12 @@ export const enlaceLlamada = (tel?: string | null) => {
 };
 
 /** Solo se muestran imágenes http(s); cualquier otro esquema (javascript:, data:) se descarta. */
+const FOTO_PROPIA = /^\/api\/archivos\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp)$/;
+
+/** Solo deja pasar enlaces http(s) o las fotos que sube el propio portal. Todo lo demás (javascript:, data:…) se descarta. */
 export function urlSegura(u?: string | null): string | null {
   if (!u) return null;
+  if (FOTO_PROPIA.test(u)) return u;
   try {
     const url = new URL(u);
     return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : null;

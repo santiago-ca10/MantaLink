@@ -1,13 +1,13 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ApiError, categorias, DatosPublicacion, publicaciones } from '../api';
+import { ApiError, archivos, categorias, DatosPublicacion, publicaciones } from '../api';
 import { Campo } from '../components/ui/Campo';
 import { Imagen } from '../components/ui/Imagen';
 import { Cargando, ErrorMensaje } from '../components/ui/Mensaje';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useCarga } from '../hooks/useCarga';
-import { urlSegura } from '../utils/format';
+import { prepararFoto } from '../utils/foto';
 
 const MAX_FOTOS = 5;
 
@@ -26,6 +26,8 @@ export default function PublicacionForm() {
   const [fotos, setFotos] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [subiendo, setSubiendo] = useState(false);
+  const selector = useRef<HTMLInputElement>(null);
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF((x) => ({ ...x, [k]: k === 'categoriaId' ? Number(e.target.value) : e.target.value, ...(k === 'categoriaId' ? { subcategoria: '' } : {}) }));
 
   // Al editar, se rellena el formulario con lo que ya existe; al crear, con el teléfono del perfil
@@ -42,17 +44,28 @@ export default function PublicacionForm() {
   if (editando && !existente.datos) return <section className="screen"><ErrorMensaje texto="No encontramos esa publicación." /><Link to="/vender" className="back">← Volver</Link></section>;
 
   const cat = cats.datos?.find((c) => c.id === f.categoriaId);
-  const cambiarFoto = (i: number, v: string) => setFotos((l) => l.map((x, n) => (n === i ? v : x)));
+  const elegirFotos = async (e: ChangeEvent<HTMLInputElement>) => {
+    const elegidas = Array.from(e.target.files ?? []).slice(0, MAX_FOTOS - fotos.length);
+    e.target.value = ''; // permite volver a elegir la misma foto
+    if (!elegidas.length) return;
+    setError(null); setSubiendo(true);
+    try {
+      const nuevas: string[] = [];
+      for (const archivo of elegidas) nuevas.push(await archivos.subirFoto(await prepararFoto(archivo)));
+      setFotos((l) => [...l, ...nuevas].slice(0, MAX_FOTOS));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo subir la foto');
+    } finally { setSubiendo(false); }
+  };
 
   const enviar = async (e: FormEvent) => {
     e.preventDefault(); setError(null);
     if (!cat) { setError('Elige una categoría'); return; }
-    const invalida = fotos.map((x) => x.trim()).filter(Boolean).find((x) => !urlSegura(x));
-    if (invalida) { setError('Una de las fotos no es un enlace válido (debe empezar por https://)'); return; }
+    if (subiendo) { setError('Espera a que termine de subirse la foto'); return; }
 
     const datos: DatosPublicacion = {
       titulo: f.titulo.trim(), descripcion: f.descripcion.trim(), precio: f.precio.trim(),
-      imagenes: fotos.map((x) => x.trim()).filter(Boolean),
+      imagenes: fotos,
       ...(f.subcategoria ? { subcategoria: f.subcategoria } : {}),
       ...(f.telefono.trim() ? { telefono: f.telefono.trim() } : {}),
       ...(f.whatsapp.trim() ? { whatsapp: f.whatsapp.trim() } : {}),
@@ -90,15 +103,21 @@ export default function PublicacionForm() {
           ? <Campo etiqueta="Fecha del evento" requerido ayuda="Al pasar esta fecha, el evento se quita solo del catálogo.">{(fid) => <input id={fid} type="date" required value={f.fechaEvento} onChange={set('fechaEvento')} />}</Campo>
           : cat && <Campo etiqueta="Días que estará publicada" ayuda={`Entre ${cat.diasMin} y ${cat.diasMax} días. ${editando ? 'Déjalo vacío para no cambiarlo.' : `Si lo dejas vacío serán ${cat.diasMax}.`}`}>{(fid) => <input id={fid} type="number" min={cat.diasMin} max={cat.diasMax} step={1} value={f.duracionDias} onChange={set('duracionDias')} />}</Campo>}
 
-        <p className="field-label-standalone">Fotos (máximo {MAX_FOTOS}) — pega el enlace de cada foto</p>
-        {fotos.map((u, i) => (
-          <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
-            <div style={{ width: 56, height: 56, flex: '0 0 56px', borderRadius: 8, overflow: 'hidden' }}><Imagen src={u} alt={`Vista previa de la foto ${i + 1}`} className="" /></div>
-            <input aria-label={`Enlace de la foto ${i + 1}`} style={{ flex: 1, padding: 12, border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg)', color: 'var(--ink)', minHeight: 46 }} value={u} onChange={(e) => cambiarFoto(i, e.target.value)} placeholder="https://…" />
-            <button type="button" className="btn btn-outline" onClick={() => setFotos((l) => l.filter((_, n) => n !== i))} aria-label={`Quitar foto ${i + 1}`}>✕</button>
-          </div>
-        ))}
-        {fotos.length < MAX_FOTOS && <button type="button" className="btn btn-outline" style={{ marginBottom: 18 }} onClick={() => setFotos((l) => [...l, ''])}>+ Agregar foto</button>}
+        <p className="field-label-standalone">Fotos del producto (máximo {MAX_FOTOS})</p>
+        <input ref={selector} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={elegirFotos} aria-label="Elegir fotos" />
+        <div className="photo-grid">
+          {fotos.map((u, i) => (
+            <div key={u + i} className="photo-slot filled">
+              <Imagen src={u} alt={`Foto ${i + 1}`} className="" />
+              <button type="button" className="photo-remove" onClick={() => setFotos((l) => l.filter((_, n) => n !== i))} aria-label={`Quitar foto ${i + 1}`}>×</button>
+            </div>
+          ))}
+          {fotos.length < MAX_FOTOS && (
+            <button type="button" className="photo-slot add" onClick={() => selector.current?.click()} disabled={subiendo} aria-label="Agregar foto">
+              {subiendo ? <span>Subiendo…</span> : <span>+ Foto</span>}
+            </button>
+          )}
+        </div>
 
         <h4 className="contact-title">Contacto</h4>
         <Campo etiqueta="Teléfono">{(fid) => <input id={fid} type="tel" value={f.telefono} onChange={set('telefono')} placeholder="300 000 0000" />}</Campo>

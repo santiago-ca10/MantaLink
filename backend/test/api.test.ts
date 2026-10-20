@@ -14,6 +14,7 @@ import { NestFactory } from '@nestjs/core';
 import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
+import { CorreoService } from '../src/modules/correo/correo.service';
 import { Categoria, EstadoUsuario, Rol, Usuario } from '../src/database/entities';
 
 let app: any, base: string, ds: DataSource;
@@ -112,6 +113,36 @@ test('reportes: público puede reportar; admin decide; queda historial', async (
   const h = await ds.query('SELECT decision FROM revisiones_moderacion ORDER BY id');
   assert.deepEqual(h.map((x: any) => x.decision), ['APROBAR', 'OCULTAR']);
 });
+test('subida de fotos: solo imágenes reales, solo productores, y el nombre lo pone el servidor', async () => {
+  process.env.UPLOADS_DIR = require('os').tmpdir() + '/mantalink-test-uploads';
+  const subir = async (bytes: Buffer, nombre: string, token?: string) => {
+    const fd = new FormData(); fd.append('archivo', new Blob([new Uint8Array(bytes)]), nombre);
+    const r = await fetch(base + '/archivos', { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {}, body: fd });
+    return { status: r.status, body: await r.json().catch(() => null) as any };
+  };
+  const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(64)]);
+  assert.equal((await subir(png, 'a.png')).status, 401); // sin sesión
+  assert.equal((await subir(png, 'a.png', adminToken)).status, 403); // el admin no es productor
+  const ok = await subir(png, '../../etc/passwd.png', prodToken); // el nombre del cliente se ignora
+  assert.equal(ok.status, 201);
+  assert.match(ok.body.url, /^\/api\/archivos\/[0-9a-f-]{36}\.png$/);
+  const img = await fetch(base.replace('/api', '') + ok.body.url);
+  assert.equal(img.status, 200);
+  assert.equal(img.headers.get('content-type'), 'image/png');
+  assert.equal(img.headers.get('x-content-type-options'), 'nosniff');
+  // un "png" que en realidad es texto/HTML/script se rechaza aunque el nombre y el tipo digan imagen
+  assert.equal((await subir(Buffer.from('<script>alert(1)</script>'), 'x.png', prodToken)).status, 400);
+  assert.equal((await subir(Buffer.from('<svg onload=alert(1)>'), 'x.svg', prodToken)).status, 400);
+  // demasiado grande
+  assert.equal((await subir(Buffer.concat([png, Buffer.alloc(5 * 1024 * 1024)]), 'grande.png', prodToken)).status, 413);
+  // no se pueden leer archivos fuera de la carpeta
+  assert.equal((await fetch(base + '/archivos/..%2f..%2fpackage.json')).status, 404);
+  assert.equal((await fetch(base + '/archivos/passwd')).status, 404);
+  // la oferta acepta fotos subidas y enlaces https, pero no rutas inventadas ni javascript:
+  assert.equal((await call('POST', '/publicaciones', oferta({ imagenes: [ok.body.url, 'https://ejemplo.com/a.jpg'] }), prodToken)).status, 201);
+  assert.equal((await call('POST', '/publicaciones', oferta({ imagenes: ['/api/archivos/../../x.png'] }), prodToken)).status, 400);
+  assert.equal((await call('POST', '/publicaciones', oferta({ imagenes: ['javascript:alert(1)'] }), prodToken)).status, 400);
+});
 test('suspender una cuenta invalida su sesión al instante y oculta sus ofertas', async () => {
   await call('PATCH', `/admin/usuarios/${prodId}/estado`, { estado: 'SUSPENDIDO' }, adminToken);
   assert.equal((await call('GET', '/publicaciones/mias/lista', undefined, prodToken)).status, 401);
@@ -122,6 +153,54 @@ test('cambiar contraseña exige la actual', async () => {
   assert.equal((await call('POST', '/auth/cambiar-contrasena', { actual: 'mala12345', nueva: 'nueva12345' }, t)).status, 401);
   assert.equal((await call('POST', '/auth/cambiar-contrasena', { actual: 'clave12345', nueva: 'nueva12345' }, t)).status, 201);
   assert.equal((await call('POST', '/auth/login', { correo: 'otro@test.com', contrasena: 'nueva12345' })).status, 201);
+});
+
+test('recuperar contraseña: enlace de un solo uso, vence, no revela cuentas y cierra sesiones viejas', async () => {
+  const enviados: { para: string; texto: string }[] = [];
+  app.get(CorreoService).enviar = async (para: string, _a: string, texto: string) => { enviados.push({ para, texto }); };
+  const tokenDe = (texto: string) => /token=([0-9a-f]{64})/.exec(texto)![1];
+  await call('POST', '/auth/registro', registro('rec@test.com'));
+  const sesionVieja = (await call('POST', '/auth/login', { correo: 'rec@test.com', contrasena: 'clave12345' })).body.token;
+
+  // misma respuesta exista o no la cuenta, y solo se manda correo si existe
+  const a = await call('POST', '/auth/olvide-contrasena', { correo: 'rec@test.com' });
+  const b = await call('POST', '/auth/olvide-contrasena', { correo: 'noexiste@test.com' });
+  assert.equal(a.status, 201); assert.equal(b.status, 201);
+  assert.deepEqual(a.body, b.body);
+  assert.equal(enviados.length, 1); assert.equal(enviados[0].para, 'rec@test.com');
+  assert.equal((await call('POST', '/auth/olvide-contrasena', { correo: 'no-es-correo' })).status, 400);
+
+  // solo se guarda el hash: el token no aparece en la base de datos
+  const t1 = tokenDe(enviados[0].texto);
+  assert.equal((await ds.query('SELECT 1 FROM tokens_recuperacion WHERE "tokenHash" = $1', [t1])).length, 0);
+
+  // pedir otro enlace invalida el anterior
+  await call('POST', '/auth/olvide-contrasena', { correo: 'rec@test.com' });
+  const t2 = tokenDe(enviados[1].texto);
+  assert.equal((await call('POST', '/auth/restablecer-contrasena', { token: t1, nueva: 'nueva12345' })).status, 400);
+
+  // validaciones
+  assert.equal((await call('POST', '/auth/restablecer-contrasena', { token: t2, nueva: 'corta' })).status, 400);
+  assert.equal((await call('POST', '/auth/restablecer-contrasena', { token: 'a'.repeat(64), nueva: 'nueva12345' })).status, 400);
+
+  await new Promise((r) => setTimeout(r, 1100)); // para que la sesión vieja sea claramente anterior al cambio
+  assert.equal((await call('POST', '/auth/restablecer-contrasena', { token: t2, nueva: 'nueva12345' })).status, 201);
+  assert.equal((await call('POST', '/auth/restablecer-contrasena', { token: t2, nueva: 'otra123456' })).status, 400); // un solo uso
+  assert.equal((await call('POST', '/auth/login', { correo: 'rec@test.com', contrasena: 'clave12345' })).status, 401);
+  assert.equal((await call('POST', '/auth/login', { correo: 'rec@test.com', contrasena: 'nueva12345' })).status, 201);
+  assert.equal((await call('GET', '/auth/me', undefined, sesionVieja)).status, 401); // la sesión anterior al cambio ya no sirve
+
+  // vencimiento (30 min)
+  await call('POST', '/auth/olvide-contrasena', { correo: 'rec@test.com' });
+  const t3 = tokenDe(enviados[2].texto);
+  await ds.query(`UPDATE tokens_recuperacion SET "expiraEn" = now() - interval '1 minute' WHERE "usadoEn" IS NULL`);
+  assert.equal((await call('POST', '/auth/restablecer-contrasena', { token: t3, nueva: 'otra123456' })).status, 400);
+
+  // cuenta suspendida: no se envía nada
+  await ds.query(`UPDATE usuarios SET estado = 'SUSPENDIDO' WHERE correo = 'rec@test.com'`);
+  const antes = enviados.length;
+  await call('POST', '/auth/olvide-contrasena', { correo: 'rec@test.com' });
+  assert.equal(enviados.length, antes);
 });
 
 test('fuerza bruta: el login se bloquea tras demasiados intentos', async () => {

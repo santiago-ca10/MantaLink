@@ -19,6 +19,8 @@ export class Usuario {
   @Column({ select: false }) contrasenaHash: string;
   @Column({ type: 'enum', enum: Rol, default: Rol.PRODUCTOR }) rol: Rol;
   @Column({ type: 'enum', enum: EstadoUsuario, default: EstadoUsuario.PENDIENTE }) estado: EstadoUsuario;
+  // Si cambia la contraseña, las sesiones iniciadas ANTES de este momento dejan de valer
+  @Column({ type: 'timestamptz', nullable: true }) contrasenaCambiadaEn: Date | null;
   @CreateDateColumn() creadoEn: Date;
   @OneToMany(() => Publicacion, (p) => p.productor) publicaciones: Publicacion[];
 }

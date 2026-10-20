@@ -21,4 +21,5 @@ Cuenta admin de desarrollo: `admin@mail.com` / `admin`. Productores de ejemplo: 
 ## Seguridad
 - React escapa todo el texto (no se usa `innerHTML`); enlaces/fotos solo `http(s)`; WhatsApp/llamada se construyen solo con dígitos.
 - Las rutas `/vender`, `/favoritos`, `/perfil`, `/admin` exigen sesión/rol (el backend vuelve a validar siempre).
-- Pendiente antes de producción: HTTPS, token en cookie httpOnly (hoy va en localStorage), recuperación de contraseña, subida real de imágenes.
+- Las fotos se reducen a 1600 px y se convierten a JPEG en el navegador antes de subirse (ahorra datos); el servidor las revisa de nuevo.
+- Pendiente antes de producción: HTTPS y token en cookie httpOnly (hoy va en localStorage).

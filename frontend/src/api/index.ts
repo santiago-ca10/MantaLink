@@ -12,6 +12,8 @@ export const auth = {
   registro: (d: RegistroDatos) => api<{ mensaje: string }>('POST', '/auth/registro', d, false),
   login: (correo: string, contrasena: string) => api<SesionRespuesta>('POST', '/auth/login', { correo, contrasena }, false),
   me: () => api<Usuario>('GET', '/auth/me'),
+  olvideContrasena: (correo: string) => api<{ mensaje: string }>('POST', '/auth/olvide-contrasena', { correo }, false),
+  restablecerContrasena: (token: string, nueva: string) => api<{ mensaje: string }>('POST', '/auth/restablecer-contrasena', { token, nueva }, false),
   cambiarContrasena: (actual: string, nueva: string) => api<{ mensaje: string }>('POST', '/auth/cambiar-contrasena', { actual, nueva }),
 };
 
@@ -58,4 +60,13 @@ export const admin = {
   reportes: () => api<Reporte[]>('GET', '/admin/reportes'),
   resolverReporte: (id: number, decision: 'MANTENER' | 'SOLICITAR_CAMBIOS' | 'OCULTAR' | 'RETIRAR', comentario?: string) =>
     api<{ mensaje: string }>('PATCH', `/admin/reportes/${id}/resolver`, { decision, ...(comentario ? { comentario } : {}) }),
+};
+
+export const archivos = {
+  /** Sube una foto y devuelve su ruta pública (/api/archivos/…). */
+  subirFoto: async (foto: Blob) => {
+    const fd = new FormData();
+    fd.append('archivo', foto, 'foto.jpg');
+    return (await api<{ url: string }>('POST', '/archivos', fd)).url;
+  },
 };

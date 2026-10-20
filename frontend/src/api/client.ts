@@ -32,8 +32,9 @@ export async function api<T>(metodo: string, ruta: string, cuerpo?: unknown, con
   try {
     res = await fetch(BASE + ruta, {
       method: metodo,
-      headers: { ...(cuerpo !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(t ? { Authorization: `Bearer ${t}` } : {}) },
-      body: cuerpo !== undefined ? JSON.stringify(cuerpo) : undefined,
+      // Con FormData el navegador pone solo el Content-Type (con el boundary); con JSON lo ponemos nosotros
+      headers: { ...(cuerpo !== undefined && !(cuerpo instanceof FormData) ? { 'Content-Type': 'application/json' } : {}), ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+      body: cuerpo === undefined ? undefined : cuerpo instanceof FormData ? cuerpo : JSON.stringify(cuerpo),
     });
   } catch {
     throw new ApiError(0, 'No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.');

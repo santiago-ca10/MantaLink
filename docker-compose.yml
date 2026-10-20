@@ -26,6 +26,9 @@ services:
       ADMIN_CORREO: admin@mail.com
       ADMIN_PASSWORD: admin
       PORT: "3000"
+      APP_URL: http://localhost:8080   # para el enlace del correo de recuperación
+      # Sin SMTP_HOST el correo se imprime en los logs del backend (docker compose logs backend). Para correo real, ver backend/.env.example
+    volumes: [uploads:/app/uploads]   # fotos subidas: persisten aunque recrees el contenedor
     ports: ["3000:3000"]
 
   frontend:
@@ -35,3 +38,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

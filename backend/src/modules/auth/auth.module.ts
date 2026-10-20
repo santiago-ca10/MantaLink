@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Usuario } from '../../database/entities';
+import { TokenRecuperacion, Usuario } from '../../database/entities';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard, RolesGuard } from '../../common';
@@ -10,7 +10,7 @@ import { JwtAuthGuard, RolesGuard } from '../../common';
 @Global()
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Usuario]),
+    TypeOrmModule.forFeature([Usuario, TokenRecuperacion]),
     JwtModule.register({ global: true, secret: process.env.JWT_SECRET ?? 'dev-secret-solo-desarrollo', signOptions: { expiresIn: '8h' } }),
   ],
   controllers: [AuthController],

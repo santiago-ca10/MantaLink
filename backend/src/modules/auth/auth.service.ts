@@ -1,14 +1,24 @@
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { Repository } from 'typeorm';
+import { createHash, randomBytes } from 'crypto';
+import { IsNull, MoreThan, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { EstadoUsuario, Usuario } from '../../database/entities';
-import { CambiarContrasenaDto, LoginDto, RegistroDto } from './dto';
+import { EstadoUsuario, TokenRecuperacion, Usuario } from '../../database/entities';
+import { CorreoService } from '../correo/correo.service';
+import { CambiarContrasenaDto, LoginDto, OlvideContrasenaDto, RegistroDto, RestablecerContrasenaDto } from './dto';
+
+const MINUTOS_VIGENCIA = 30; // el documento (CU5) pide que el enlace expire
+const sha256 = (t: string) => createHash('sha256').update(t).digest('hex');
 
 @Injectable()
 export class AuthService {
-  constructor(@InjectRepository(Usuario) private usuarios: Repository<Usuario>, private jwt: JwtService) {}
+  constructor(
+    @InjectRepository(Usuario) private usuarios: Repository<Usuario>,
+    @InjectRepository(TokenRecuperacion) private tokens: Repository<TokenRecuperacion>,
+    private jwt: JwtService,
+    private correo: CorreoService,
+  ) {}
 
   async registrar(dto: RegistroDto) {
     if (dto.contrasena !== dto.confirmarContrasena) throw new BadRequestException('Las contraseñas no coinciden');
@@ -36,8 +46,37 @@ export class AuthService {
   async cambiarContrasena(id: string, dto: CambiarContrasenaDto) {
     const u = await this.usuarios.findOne({ where: { id }, select: { id: true, contrasenaHash: true } });
     if (!u || !(await bcrypt.compare(dto.actual, u.contrasenaHash))) throw new UnauthorizedException('La contraseña actual no es correcta');
-    await this.usuarios.update(id, { contrasenaHash: await bcrypt.hash(dto.nueva, 10) });
+    await this.usuarios.update(id, { contrasenaHash: await bcrypt.hash(dto.nueva, 10), contrasenaCambiadaEn: new Date() });
     return { mensaje: 'Contraseña actualizada' };
+  }
+
+  /** CU5 paso 1: pide el enlace. Responde SIEMPRE lo mismo, exista o no el correo, para no revelar qué cuentas existen. */
+  async olvideContrasena(dto: OlvideContrasenaDto) {
+    const respuesta = { mensaje: 'Si ese correo tiene una cuenta, te enviamos un enlace para crear una contraseña nueva. Vence en 30 minutos.' };
+    const u = await this.usuarios.findOneBy({ correo: dto.correo.toLowerCase() });
+    if (!u || u.estado === EstadoUsuario.SUSPENDIDO) return respuesta;
+    // un solo enlace vigente por cuenta: los anteriores se invalidan
+    await this.tokens.update({ usuarioId: u.id, usadoEn: IsNull() }, { usadoEn: new Date() });
+    const token = randomBytes(32).toString('hex'); // 64 caracteres, imposibles de adivinar
+    await this.tokens.save(this.tokens.create({ usuarioId: u.id, tokenHash: sha256(token), expiraEn: new Date(Date.now() + MINUTOS_VIGENCIA * 60_000), usadoEn: null }));
+    const base = (process.env.APP_URL ?? 'http://localhost:8080').replace(/\/+$/, '');
+    try {
+      await this.correo.enviar(u.correo, 'Restablecer tu contraseña de MantaLink',
+        `Hola ${u.nombre},\n\nRecibimos una solicitud para crear una contraseña nueva.\nEntra a este enlace (vence en ${MINUTOS_VIGENCIA} minutos y solo sirve una vez):\n\n${base}/restablecer?token=${token}\n\nSi no fuiste tú, ignora este mensaje: tu contraseña sigue igual.`);
+    } catch (e) { new Logger('Auth').error(`No se pudo enviar el correo de recuperación: ${(e as Error).message}`); } // al visitante no se le cuenta (no revelar nada)
+    return respuesta;
+  }
+
+  /** CU5 paso 2: cambia la clave con el enlace. El token sirve una sola vez y vence a los 30 min. */
+  async restablecerContrasena(dto: RestablecerContrasenaDto) {
+    const t = await this.tokens.findOne({ where: { tokenHash: sha256(dto.token), usadoEn: IsNull(), expiraEn: MoreThan(new Date()) } });
+    if (!t) throw new BadRequestException('El enlace no es válido o ya venció. Pide uno nuevo.');
+    // se marca como usado ANTES de cambiar la clave, y solo si sigue sin usar (dos clics simultáneos no pasan los dos)
+    const r = await this.tokens.update({ id: t.id, usadoEn: IsNull() }, { usadoEn: new Date() });
+    if (!r.affected) throw new BadRequestException('El enlace no es válido o ya venció. Pide uno nuevo.');
+    await this.usuarios.update(t.usuarioId, { contrasenaHash: await bcrypt.hash(dto.nueva, 10), contrasenaCambiadaEn: new Date() });
+    await this.tokens.update({ usuarioId: t.usuarioId, usadoEn: IsNull() }, { usadoEn: new Date() });
+    return { mensaje: 'Contraseña actualizada. Ya puedes iniciar sesión.' };
   }
 
   perfil(id: string) { return this.usuarios.findOneByOrFail({ id }); }

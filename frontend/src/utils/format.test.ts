@@ -30,3 +30,15 @@ describe('urlSegura', () => {
     expect(urlSegura('no es url')).toBeNull();
   });
 });
+
+describe('urlSegura con fotos subidas al portal', () => {
+  it('acepta /api/archivos/<uuid>.jpg', () => {
+    const r = '/api/archivos/123e4567-e89b-12d3-a456-426614174000.jpg';
+    expect(urlSegura(r)).toBe(r);
+  });
+  it('rechaza rutas inventadas o con ../', () => {
+    expect(urlSegura('/api/archivos/../../etc/passwd')).toBeNull();
+    expect(urlSegura('/api/archivos/x.svg')).toBeNull();
+    expect(urlSegura('javascript:alert(1)')).toBeNull();
+  });
+});
