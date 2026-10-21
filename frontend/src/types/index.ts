@@ -42,6 +42,7 @@ export interface Publicacion {
   titulo: string;
   descripcion: string;
   precio: string;
+  ubicacion?: string | null;
   subcategoria?: string | null;
   imagenes: string[];
   telefono?: string | null;

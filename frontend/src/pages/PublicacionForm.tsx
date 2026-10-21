@@ -22,7 +22,7 @@ export default function PublicacionForm() {
   const cats = useCarga(() => categorias.listar(), []);
   const existente = useCarga(async () => (editando ? (await publicaciones.mias()).find((p) => p.id === Number(id)) ?? null : null), [id]);
 
-  const [f, setF] = useState({ categoriaId: 0, subcategoria: '', titulo: '', descripcion: '', precio: '', telefono: '', whatsapp: '', correoContacto: '', duracionDias: '', fechaEvento: '' });
+  const [f, setF] = useState({ categoriaId: 0, subcategoria: '', titulo: '', descripcion: '', precio: '', ubicacion: '', telefono: '', whatsapp: '', correoContacto: '', duracionDias: '', fechaEvento: '' });
   const [fotos, setFotos] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -34,9 +34,9 @@ export default function PublicacionForm() {
   useEffect(() => {
     const p = existente.datos;
     if (p) {
-      setF({ categoriaId: p.categoria.id, subcategoria: p.subcategoria ?? '', titulo: p.titulo, descripcion: p.descripcion, precio: p.precio, telefono: p.telefono ?? '', whatsapp: p.whatsapp ?? '', correoContacto: p.correoContacto ?? '', duracionDias: '', fechaEvento: p.fechaEvento ?? '' });
+      setF({ categoriaId: p.categoria.id, subcategoria: p.subcategoria ?? '', titulo: p.titulo, descripcion: p.descripcion, precio: p.precio, ubicacion: p.ubicacion ?? p.productor.vereda ?? '', telefono: p.telefono ?? '', whatsapp: p.whatsapp ?? '', correoContacto: p.correoContacto ?? '', duracionDias: '', fechaEvento: p.fechaEvento ?? '' });
       setFotos(p.imagenes);
-    } else if (!editando && usuario) setF((x) => ({ ...x, telefono: x.telefono || usuario.telefono || '' }));
+    } else if (!editando && usuario) setF((x) => ({ ...x, ubicacion: x.ubicacion || usuario.vereda || '', telefono: x.telefono || usuario.telefono || '' }));
   }, [existente.datos, editando, usuario]);
 
   if (!puedePublicar) return <section className="screen"><ErrorMensaje texto="Tu cuenta aún no puede publicar: debe ser verificada por un administrador." /><Link to="/vender" className="back">← Volver</Link></section>;
@@ -65,6 +65,7 @@ export default function PublicacionForm() {
 
     const datos: DatosPublicacion = {
       titulo: f.titulo.trim(), descripcion: f.descripcion.trim(), precio: f.precio.trim(),
+      ubicacion: f.ubicacion.trim(),
       imagenes: fotos,
       ...(f.subcategoria ? { subcategoria: f.subcategoria } : {}),
       ...(f.telefono.trim() ? { telefono: f.telefono.trim() } : {}),
@@ -96,6 +97,7 @@ export default function PublicacionForm() {
           <Campo etiqueta="Tipo específico">{(fid) => <select id={fid} value={f.subcategoria} onChange={set('subcategoria')}><option value="">Sin especificar</option>{cat.subcategorias.map((s) => <option key={s}>{s}</option>)}</select>}</Campo>
         )}
         <Campo etiqueta="Nombre" requerido>{(fid) => <input id={fid} required maxLength={120} value={f.titulo} onChange={set('titulo')} placeholder="Ej: Panela orgánica" />}</Campo>
+        <Campo etiqueta="Vereda o sector donde ofreces esta publicación" requerido>{(fid) => <input id={fid} required maxLength={80} value={f.ubicacion} onChange={set('ubicacion')} placeholder="Ej: El Salitre" />}</Campo>
         <Campo etiqueta="Precio" requerido ayuda="Escríbelo como quieras que se vea: “$8.000 libra”, “Según destino”, “Entrada libre”.">{(fid) => <input id={fid} required maxLength={60} value={f.precio} onChange={set('precio')} placeholder="Ej: $8.000 libra" />}</Campo>
         <Campo etiqueta="Descripción" requerido>{(fid) => <textarea id={fid} required rows={4} maxLength={2000} value={f.descripcion} onChange={set('descripcion')} placeholder="Cuéntale a la comunidad qué ofreces…" />}</Campo>
 

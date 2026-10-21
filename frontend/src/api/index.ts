@@ -19,16 +19,19 @@ export const auth = {
 };
 
 // ---- Catálogo ----
-export interface FiltrosCatalogo { q?: string; categoria?: string; subcategoria?: string; orden?: string; pagina?: number; limite?: number }
+export interface FiltrosCatalogo { q?: string; categoria?: string; categorias?: string[]; ubicacion?: string; subcategoria?: string; orden?: string; pagina?: number; limite?: number }
 const query = (f: Record<string, unknown>) => {
   const p = new URLSearchParams();
-  Object.entries(f).forEach(([k, v]) => { if (v !== undefined && v !== '' && v !== null) p.set(k, String(v)); });
+  Object.entries(f).forEach(([k, v]) => {
+    if (Array.isArray(v)) v.forEach((item) => { if (item !== undefined && item !== '' && item !== null) p.append(k, String(item)); });
+    else if (v !== undefined && v !== '' && v !== null) p.set(k, String(v));
+  });
   const s = p.toString();
   return s ? `?${s}` : '';
 };
 
 export interface DatosPublicacion {
-  titulo: string; descripcion: string; precio: string; categoriaId?: number; subcategoria?: string;
+  titulo: string; descripcion: string; precio: string; ubicacion?: string; categoriaId?: number; subcategoria?: string;
   imagenes?: string[]; telefono?: string; whatsapp?: string; correoContacto?: string; duracionDias?: number; fechaEvento?: string;
 }
 

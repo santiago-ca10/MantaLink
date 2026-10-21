@@ -15,6 +15,7 @@ export class Publicacion {
   @Column('text') descripcion: string;
   // Texto libre a propósito: "$8.000 libra", "Según destino", "Entrada libre"
   @Column() precio: string;
+  @Column({ type: 'varchar', length: 80, nullable: true }) ubicacion: string | null;
   @Column({ nullable: true }) subcategoria: string;
   @Column('text', { array: true, default: [] }) imagenes: string[];
   @Column({ nullable: true }) telefono: string;

@@ -6,6 +6,7 @@ export class CrearPublicacionDto {
   @IsString() @IsNotEmpty() @MaxLength(2000) descripcion: string;
   @IsString() @IsNotEmpty() @MaxLength(60) precio: string;
   @IsInt() categoriaId: number;
+  @IsOptional() @IsString() @MaxLength(80) ubicacion?: string;
   @IsOptional() @IsString() subcategoria?: string;
   // Máx. 5 fotos, como en el mockup: enlaces externos o archivos subidos con POST /api/archivos
   @IsOptional() @IsArray() @ArrayMaxSize(5) @EsImagen() imagenes?: string[];

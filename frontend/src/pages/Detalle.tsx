@@ -56,6 +56,7 @@ export default function Detalle() {
           <p className="seller" style={{ marginBottom: 4 }}>{p.categoria.nombre}{p.subcategoria ? ` · ${p.subcategoria}` : ''}</p>
           <h2 style={{ fontSize: '1.6rem', marginBottom: 8 }}>{p.titulo}</h2>
           <div className="price" style={{ fontSize: '1.4rem' }}>{p.precio}</div>
+          {(p.ubicacion || p.productor.vereda) && <p className="seller">Vereda o sector: {p.ubicacion || p.productor.vereda}</p>}
           {p.fechaEvento && <p className="seller">📅 {fechaCorta(p.fechaEvento)}</p>}
           {restantes !== null && restantes >= 0 && restantes <= 7 && <p className="seller">Disponible {restantes === 0 ? 'hasta hoy' : `${restantes} ${restantes === 1 ? 'día' : 'días'} más`}</p>}
           {/* Texto plano: React escapa el contenido, así que ningún HTML escrito por un usuario se ejecuta */}

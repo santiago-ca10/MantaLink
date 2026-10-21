@@ -6,6 +6,7 @@ import { ActualizarPublicacionDto, CatalogoQueryDto, CrearPublicacionDto } from 
 
 const hoy = () => new Date().toISOString().slice(0, 10);
 const sumarDias = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+const escaparLike = (texto: string) => texto.replace(/[\\%_]/g, '\\$&');
 
 @Injectable()
 export class PublicacionesService {
@@ -25,8 +26,11 @@ export class PublicacionesService {
       // Vencidas y eventos pasados no se muestran (se "quitan solas", como en el mockup)
       .andWhere(new Brackets((b) => b.where('p.vigenteHasta IS NULL').orWhere('p.vigenteHasta >= :hoy', { hoy: hoy() })))
       .andWhere(new Brackets((b) => b.where('p.fechaEvento IS NULL').orWhere('p.fechaEvento >= :hoy', { hoy: hoy() })));
-    if (q.q) qb.andWhere(new Brackets((b) => b.where('p.titulo ILIKE :q').orWhere('p.descripcion ILIKE :q').orWhere('u.nombreNegocio ILIKE :q')), { q: `%${q.q.replace(/[\\%_]/g, '\\$&')}%` });
-    if (q.categoria) qb.andWhere('c.nombre = :cat', { cat: q.categoria });
+    if (q.q) qb.andWhere(new Brackets((b) => b.where('p.titulo ILIKE :q').orWhere('p.descripcion ILIKE :q').orWhere('u.nombreNegocio ILIKE :q')), { q: `%${escaparLike(q.q)}%` });
+    if (q.categorias?.length) qb.andWhere('c.nombre IN (:...categorias)', { categorias: q.categorias });
+    else if (q.categoria) qb.andWhere('c.nombre = :cat', { cat: q.categoria });
+    const ubicacion = q.ubicacion?.trim();
+    if (ubicacion) qb.andWhere(`COALESCE(NULLIF(p.ubicacion, ''), u.vereda) ILIKE :ubicacion`, { ubicacion: `%${escaparLike(ubicacion)}%` });
     if (q.subcategoria) qb.andWhere('p.subcategoria = :sub', { sub: q.subcategoria });
     // El precio es texto libre, así que ordenar por precio usa el primer número que aparezca en él
     const precioNum = `NULLIF(regexp_replace(split_part(p.precio, ' ', 1), '[^0-9]', '', 'g'), '')::numeric`;
@@ -64,7 +68,7 @@ export class PublicacionesService {
     if (!cat || !cat.activa) throw new BadRequestException('Categoría no válida');
     if (dto.subcategoria && cat.subcategorias.length && !cat.subcategorias.includes(dto.subcategoria)) throw new BadRequestException('Subcategoría no válida para esa categoría');
     const p = this.pubs.create({
-      titulo: dto.titulo, descripcion: dto.descripcion, precio: dto.precio, subcategoria: dto.subcategoria, imagenes: dto.imagenes ?? [],
+      titulo: dto.titulo, descripcion: dto.descripcion, precio: dto.precio, ubicacion: dto.ubicacion?.trim() || u.vereda, subcategoria: dto.subcategoria, imagenes: dto.imagenes ?? [],
       telefono: dto.telefono ?? u.telefono, whatsapp: dto.whatsapp, correoContacto: dto.correoContacto,
       productor: u, categoria: cat,
       estado: process.env.MODERACION_ACTIVA === 'false' ? EstadoPublicacion.APROBADA : EstadoPublicacion.PENDIENTE,

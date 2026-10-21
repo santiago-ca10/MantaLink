@@ -18,6 +18,7 @@ export function TarjetaPublicacion({ p, esFavorito, onFavorito }: Props) {
         <div className="body">
           <h4>{p.titulo}</h4>
           <div className="seller">{vendedor}</div>
+          {(p.ubicacion || p.productor.vereda) && <div className="seller">{p.ubicacion || p.productor.vereda}</div>}
           <div className="seller">{p.categoria.nombre}{p.subcategoria ? ` · ${p.subcategoria}` : ''}</div>
           <div className="price">{p.precio}</div>
         </div>

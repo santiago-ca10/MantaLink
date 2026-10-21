@@ -115,6 +115,24 @@ test('reportes: público puede reportar; admin decide; queda historial', async (
   const h = await ds.query('SELECT decision FROM revisiones_moderacion ORDER BY id');
   assert.deepEqual(h.map((x: any) => x.decision), ['APROBAR', 'OCULTAR']);
 });
+test('catálogo: filtros avanzados combinan varias categorías y ubicación sin romper categoria', async () => {
+  const categoria = await call('POST', '/admin/categorias', { nombre: 'Servicios', diasMin: 1, diasMax: 30 }, adminToken);
+  assert.equal(categoria.status, 201);
+  const alimentos = await call('POST', '/publicaciones', oferta({ titulo: 'Arepas frescas', ubicacion: 'Bermejal' }), prodToken);
+  assert.equal(alimentos.status, 201);
+  assert.equal((await call('PATCH', `/admin/publicaciones/${alimentos.body.id}/moderar`, { decision: 'APROBAR' }, adminToken)).status, 200);
+  const pub = await call('POST', '/publicaciones', oferta({ titulo: 'Transporte', categoriaId: categoria.body.id, ubicacion: 'Manta Grande Abajo' }), prodToken);
+  assert.equal(pub.status, 201);
+  assert.equal((await call('PATCH', `/admin/publicaciones/${pub.body.id}/moderar`, { decision: 'APROBAR' }, adminToken)).status, 200);
+
+  const avanzada = await call('GET', '/publicaciones?categorias=Alimentos&categorias=Servicios');
+  assert.equal(avanzada.status, 200);
+  assert.equal(avanzada.body.total, 2);
+  assert.ok(avanzada.body.items.every((p: any) => ['Alimentos', 'Servicios'].includes(p.categoria.nombre)));
+  assert.ok(avanzada.body.items.some((p: any) => p.categoria.nombre === 'Alimentos' && p.ubicacion === 'Bermejal'));
+  assert.equal((await call('GET', '/publicaciones?categorias=Alimentos&categorias=Servicios&ubicacion=bermejal')).body.total, 1);
+  assert.equal((await call('GET', '/publicaciones?categoria=Alimentos&ubicacion=BERMEJAL')).body.total, 1);
+});
 test('subida de fotos: solo imágenes reales, solo productores, y el nombre lo pone el servidor', async () => {
   const subir = async (bytes: Buffer, nombre: string, token?: string) => {
     const fd = new FormData(); fd.append('archivo', new Blob([new Uint8Array(bytes)]), nombre);
