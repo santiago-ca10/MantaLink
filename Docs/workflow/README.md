@@ -7,15 +7,26 @@ Este documento resume lo implementado en el repositorio y el trabajo operativo q
 - Aplicación web React con catálogo, búsqueda, filtros por categoría y subcategoría, orden, paginación, detalle, favoritos y gestión de publicaciones.
 - Filtros avanzados del catálogo por varias categorías y ubicación. La ubicación pertenece a cada publicación; las publicaciones antiguas usan la vereda del productor como respaldo.
 - Registro, inicio de sesión, perfil, recuperación y cambio de contraseña.
+- Perfiles públicos de productores con sus publicaciones y calificaciones de 1 a 5; cada cuenta puede actualizar su propia calificación.
 - API NestJS con PostgreSQL, validación de entradas, control de roles, administración de categorías y usuarios, moderación, reportes y formulario de contacto.
-- Carga y entrega de imágenes, y limpieza periódica de archivos sin uso.
-- Preferencias de tema y tamaño de letra.
+- Compartir publicaciones mediante las opciones disponibles en el dispositivo o copiando el enlace.
+- Los administradores pueden consultar las publicaciones recientes y crear eventos; los eventos se aprueban automáticamente. Los productores no pueden publicar eventos.
+- Carga y entrega de imágenes, limpieza periódica de archivos sin uso y fotos de ejemplo en el seed. Las fotos de ejemplo reutilizan URLs externas del mockup.
+- Preferencias de tema y tamaño de letra, además de selector de idioma español/inglés con traducción parcial.
+- El panel administrativo incluye un indicador BSC marcado como información simulada; no representa métricas conectadas a datos reales.
 - Entorno de desarrollo Docker Compose y pruebas automatizadas de frontend y backend.
 - Mockup estático disponible como demo independiente: [abrir el demo](https://santiago-ca10.github.io/MantaLink/).
 
+## Alcance y limitaciones
+
+- Las imágenes remotas de ejemplo dependen de los sitios que las alojan. Si una URL deja de funcionar, la interfaz muestra el estado «Sin foto»; para producción conviene cargar imágenes propias.
+- Las publicaciones del panel administrativo se limitan a las 200 más recientes.
+- La traducción al inglés cubre solo una parte de la interfaz.
+- El BSC es únicamente una referencia visual y no debe usarse para tomar decisiones operativas.
+
 ## Pendiente antes de producción
 
-- Definir y completar una estrategia de migraciones para todo el esquema. La migración de ubicación de publicaciones ya está incluida y se ejecuta al iniciar en producción; esto no sustituye migraciones para el resto de cambios futuros.
+- Definir y completar una estrategia de migraciones para todo el esquema. Las migraciones de ubicación de publicaciones y calificaciones están incluidas y se ejecutan al iniciar en producción; esto no sustituye migraciones para el resto de cambios futuros.
 - Configurar y verificar el despliegue con HTTPS, orígenes CORS explícitos, secretos de producción y `trust proxy` cuando haya un proxy inverso.
 - Decidir cómo guardar las sesiones de forma segura: el frontend actualmente conserva el token en `localStorage`; valorar cookies `httpOnly`, `Secure` y `SameSite` antes de producción.
 - Definir copias de seguridad y recuperación de PostgreSQL y de los archivos cargados.

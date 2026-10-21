@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import * as entities from './database/entities';
 import { AgregarUbicacionPublicacion1792584000000 } from './database/migrations/1792584000000-agregar-ubicacion-publicacion';
+import { AgregarCalificaciones1792584000002 } from './database/migrations/1792584000002-agregar-calificaciones';
 import { AuthModule } from './modules/auth/auth.module';
 import { CorreoModule } from './modules/correo/correo.module';
 import { ContactoModule } from './modules/contacto/contacto.module';
@@ -24,7 +25,7 @@ export const ENTIDADES = Object.values(entities).filter((e) => typeof e === 'fun
       type: 'postgres',
       url: process.env.DATABASE_URL,
       entities: ENTIDADES as any[],
-      migrations: [AgregarUbicacionPublicacion1792584000000],
+      migrations: [AgregarUbicacionPublicacion1792584000000, AgregarCalificaciones1792584000002],
       migrationsRun: process.env.NODE_ENV === 'production',
       // synchronize solo en desarrollo; producción aplica migraciones explícitas.
       synchronize: process.env.NODE_ENV !== 'production',

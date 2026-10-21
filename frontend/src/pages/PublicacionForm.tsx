@@ -12,12 +12,12 @@ import { prepararFoto } from '../utils/foto';
 const MAX_FOTOS = 5;
 
 /** Sirve para crear (/vender/nueva) y para editar (/vender/:id/editar). */
-export default function PublicacionForm() {
+export default function PublicacionForm({ soloEventos = false }: { soloEventos?: boolean }) {
   const { id } = useParams();
   const editando = id !== undefined;
   const navegar = useNavigate();
   const avisar = useToast();
-  const { usuario, puedePublicar } = useAuth();
+  const { usuario, esAdmin, puedePublicar } = useAuth();
 
   const cats = useCarga(() => categorias.listar(), []);
   const existente = useCarga(async () => (editando ? (await publicaciones.mias()).find((p) => p.id === Number(id)) ?? null : null), [id]);
@@ -38,12 +38,18 @@ export default function PublicacionForm() {
       setFotos(p.imagenes);
     } else if (!editando && usuario) setF((x) => ({ ...x, ubicacion: x.ubicacion || usuario.vereda || '', telefono: x.telefono || usuario.telefono || '' }));
   }, [existente.datos, editando, usuario]);
+  useEffect(() => {
+    if (soloEventos && esAdmin && !editando && cats.datos && !f.categoriaId) {
+      setF((x) => ({ ...x, categoriaId: cats.datos!.find((c) => c.esEvento)?.id ?? 0 }));
+    }
+  }, [soloEventos, esAdmin, editando, cats.datos, f.categoriaId]);
 
-  if (!puedePublicar) return <section className="screen"><ErrorMensaje texto="Tu cuenta aún no puede publicar: debe ser verificada por un administrador." /><Link to="/vender" className="back">← Volver</Link></section>;
+  if ((!puedePublicar && !soloEventos) || (soloEventos && !esAdmin)) return <section className="screen"><ErrorMensaje texto="No tienes permiso para publicar en esta sección." /><Link to={esAdmin ? '/admin' : '/vender'} className="back">← Volver</Link></section>;
   if (cats.cargando || existente.cargando) return <Cargando />;
   if (editando && !existente.datos) return <section className="screen"><ErrorMensaje texto="No encontramos esa publicación." /><Link to="/vender" className="back">← Volver</Link></section>;
 
   const cat = cats.datos?.find((c) => c.id === f.categoriaId);
+  const categoriasVisibles = cats.datos?.filter((c) => soloEventos ? c.esEvento : esAdmin || !c.esEvento);
   const elegirFotos = async (e: ChangeEvent<HTMLInputElement>) => {
     const elegidas = Array.from(e.target.files ?? []).slice(0, MAX_FOTOS - fotos.length);
     e.target.value = ''; // permite volver a elegir la misma foto
@@ -76,22 +82,25 @@ export default function PublicacionForm() {
     setEnviando(true);
     try {
       if (editando) { await publicaciones.actualizar(Number(id), datos); avisar('Cambios guardados. Se enviará a revisión de nuevo.'); }
-      else { await publicaciones.crear({ ...datos, categoriaId: cat.id }); avisar('¡Listo! Tu publicación fue enviada a revisión.'); }
-      navegar('/vender');
+      else {
+        await publicaciones.crear({ ...datos, categoriaId: cat.id });
+        avisar(soloEventos ? 'Evento publicado.' : '¡Listo! Tu publicación fue enviada a revisión.');
+      }
+      navegar(soloEventos ? '/admin' : '/vender');
     } catch (err) { setError(err instanceof ApiError ? err.message : 'No se pudo guardar'); }
     finally { setEnviando(false); }
   };
 
   return (
     <section className="screen">
-      <Link to="/vender" className="back" style={{ textDecoration: 'none' }}>← Volver a mis publicaciones</Link>
+      <Link to={soloEventos ? '/admin' : '/vender'} className="back" style={{ textDecoration: 'none' }}>{soloEventos ? '← Volver al panel' : '← Volver a mis publicaciones'}</Link>
       <form className="publish-card" onSubmit={enviar}>
-        <div className="publish-head"><h3>{editando ? 'Editar producto o servicio' : 'Publicar producto o servicio'}</h3></div>
+        <div className="publish-head"><h3>{soloEventos ? 'Publicar evento' : editando ? 'Editar producto o servicio' : 'Publicar producto o servicio'}</h3></div>
 
         <Campo etiqueta="Categoría" requerido ayuda={editando ? 'La categoría no se puede cambiar. Si te equivocaste, elimina la publicación y crea otra.' : undefined}>
           {(fid) => <select id={fid} required disabled={editando} value={f.categoriaId || ''} onChange={set('categoriaId')}>
             <option value="" disabled>Elige una categoría…</option>
-            {cats.datos?.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select>}
+            {categoriasVisibles?.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select>}
         </Campo>
         {cat && cat.subcategorias.length > 0 && (
           <Campo etiqueta="Tipo específico">{(fid) => <select id={fid} value={f.subcategoria} onChange={set('subcategoria')}><option value="">Sin especificar</option>{cat.subcategorias.map((s) => <option key={s}>{s}</option>)}</select>}</Campo>
@@ -105,7 +114,7 @@ export default function PublicacionForm() {
           ? <Campo etiqueta="Fecha del evento" requerido ayuda="Al pasar esta fecha, el evento se quita solo del catálogo.">{(fid) => <input id={fid} type="date" required value={f.fechaEvento} onChange={set('fechaEvento')} />}</Campo>
           : cat && <Campo etiqueta="Días que estará publicada" ayuda={`Entre ${cat.diasMin} y ${cat.diasMax} días. ${editando ? 'Déjalo vacío para no cambiarlo.' : `Si lo dejas vacío serán ${cat.diasMax}.`}`}>{(fid) => <input id={fid} type="number" min={cat.diasMin} max={cat.diasMax} step={1} value={f.duracionDias} onChange={set('duracionDias')} />}</Campo>}
 
-        <p className="field-label-standalone">Fotos del producto (máximo {MAX_FOTOS})</p>
+        <p className="field-label-standalone">{soloEventos ? 'Fotos del evento' : 'Fotos del producto'} (máximo {MAX_FOTOS})</p>
         <input ref={selector} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={elegirFotos} aria-label="Elegir fotos" />
         <div className="photo-grid">
           {fotos.map((u, i) => (
@@ -126,9 +135,9 @@ export default function PublicacionForm() {
         <Campo etiqueta="WhatsApp (si es distinto al teléfono)">{(fid) => <input id={fid} type="tel" value={f.whatsapp} onChange={set('whatsapp')} placeholder="300 000 0000" />}</Campo>
         <Campo etiqueta="Correo de contacto (opcional)">{(fid) => <input id={fid} type="email" value={f.correoContacto} onChange={set('correoContacto')} />}</Campo>
 
-        <p className="settings-note">Un administrador revisará tu publicación antes de que aparezca en el catálogo.</p>
+        <p className="settings-note">{soloEventos ? 'El evento se publica aprobado y se ocultará automáticamente después de su fecha.' : 'Un administrador revisará tu publicación antes de que aparezca en el catálogo.'}</p>
         <ErrorMensaje texto={error} />
-        <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={enviando}>{enviando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Guardar y publicar'}</button>
+        <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={enviando}>{enviando ? 'Guardando…' : soloEventos ? 'Guardar y publicar evento' : editando ? 'Guardar cambios' : 'Guardar y publicar'}</button>
       </form>
     </section>
   );

@@ -1,8 +1,8 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
-import { Categoria, EstadoPublicacion, EstadoUsuario, Publicacion, Usuario } from '../../database/entities';
-import { ActualizarPublicacionDto, CatalogoQueryDto, CrearPublicacionDto } from './dto';
+import { Calificacion, Categoria, EstadoPublicacion, EstadoUsuario, Publicacion, Rol, Usuario } from '../../database/entities';
+import { ActualizarPublicacionDto, CalificarProductorDto, CatalogoQueryDto, CrearPublicacionDto } from './dto';
 
 const hoy = () => new Date().toISOString().slice(0, 10);
 const sumarDias = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
@@ -14,6 +14,7 @@ export class PublicacionesService {
     @InjectRepository(Publicacion) private pubs: Repository<Publicacion>,
     @InjectRepository(Categoria) private cats: Repository<Categoria>,
     @InjectRepository(Usuario) private usuarios: Repository<Usuario>,
+    @InjectRepository(Calificacion) private calificaciones: Repository<Calificacion>,
   ) {}
 
   // ---- Catálogo público (no requiere cuenta) ----
@@ -50,6 +51,49 @@ export class PublicacionesService {
     return this.publica(p);
   }
 
+  async perfilProductor(id: string) {
+    const productor = await this.usuarios.findOne({ where: { id, rol: Rol.PRODUCTOR, estado: EstadoUsuario.ACTIVO } });
+    if (!productor) throw new NotFoundException('Productor no encontrado');
+    const [publicaciones, resumen] = await Promise.all([
+      this.pubs.find({
+        where: { productor: { id }, estado: EstadoPublicacion.APROBADA },
+        order: { creadoEn: 'DESC' },
+      }),
+      this.calificaciones.createQueryBuilder('cal')
+        .select('AVG(cal.puntuacion)', 'promedio')
+        .addSelect('COUNT(cal.id)', 'cantidad')
+        .where('cal.productorId = :id', { id })
+        .getRawOne<{ promedio: string | null; cantidad: string }>(),
+    ]);
+    const hoyFecha = hoy();
+    const vigentes = publicaciones.filter((p) => (!p.vigenteHasta || p.vigenteHasta >= hoyFecha) && (!p.fechaEvento || p.fechaEvento >= hoyFecha));
+    return {
+      productor: { id: productor.id, nombre: productor.nombre, nombreNegocio: productor.nombreNegocio, vereda: productor.vereda },
+      publicaciones: vigentes.map((p) => this.publica(p)),
+      calificacion: { promedio: resumen?.promedio ? Number(Number(resumen.promedio).toFixed(1)) : null, cantidad: Number(resumen?.cantidad ?? 0) },
+    };
+  }
+
+  async calificarProductor(productorId: string, votanteId: string, dto: CalificarProductorDto) {
+    const [productor, votante] = await Promise.all([
+      this.usuarios.findOne({ where: { id: productorId, rol: Rol.PRODUCTOR, estado: EstadoUsuario.ACTIVO } }),
+      this.usuarios.findOne({ where: { id: votanteId, estado: EstadoUsuario.ACTIVO } }),
+    ]);
+    if (!productor) throw new NotFoundException('Productor no encontrado');
+    if (!votante) throw new ForbiddenException('Tu cuenta debe estar activa para calificar');
+    if (productor.id === votante.id) throw new BadRequestException('No puedes calificar tu propio perfil');
+    let calificacion = await this.calificaciones.findOne({ where: { productor: { id: productorId }, votante: { id: votanteId } } });
+    if (calificacion) calificacion.puntuacion = dto.puntuacion;
+    else calificacion = this.calificaciones.create({ puntuacion: dto.puntuacion, productor, votante });
+    await this.calificaciones.save(calificacion);
+    const resumen = await this.calificaciones.createQueryBuilder('cal')
+      .select('AVG(cal.puntuacion)', 'promedio')
+      .addSelect('COUNT(cal.id)', 'cantidad')
+      .where('cal.productorId = :id', { id: productorId })
+      .getRawOne<{ promedio: string | null; cantidad: string }>();
+    return { promedio: Number(Number(resumen?.promedio ?? 0).toFixed(1)), cantidad: Number(resumen?.cantidad ?? 0), puntuacion: dto.puntuacion };
+  }
+
   // Solo se exponen datos de contacto del productor, nunca documento ni hash
   private publica(p: Publicacion) {
     const { productor, ...resto } = p;
@@ -63,15 +107,16 @@ export class PublicacionesService {
 
   async crear(uid: string, dto: CrearPublicacionDto) {
     const u = await this.usuarios.findOneByOrFail({ id: uid });
-    if (u.estado !== EstadoUsuario.ACTIVO) throw new ForbiddenException('Tu cuenta aún no ha sido verificada por un administrador');
+    if (u.rol !== Rol.ADMIN && u.estado !== EstadoUsuario.ACTIVO) throw new ForbiddenException('Tu cuenta aún no ha sido verificada por un administrador');
     const cat = await this.cats.findOneBy({ id: dto.categoriaId });
     if (!cat || !cat.activa) throw new BadRequestException('Categoría no válida');
+    if (cat.esEvento && u.rol !== Rol.ADMIN) throw new ForbiddenException('Solo un administrador puede publicar eventos');
     if (dto.subcategoria && cat.subcategorias.length && !cat.subcategorias.includes(dto.subcategoria)) throw new BadRequestException('Subcategoría no válida para esa categoría');
     const p = this.pubs.create({
       titulo: dto.titulo, descripcion: dto.descripcion, precio: dto.precio, ubicacion: dto.ubicacion?.trim() || u.vereda, subcategoria: dto.subcategoria, imagenes: dto.imagenes ?? [],
       telefono: dto.telefono ?? u.telefono, whatsapp: dto.whatsapp, correoContacto: dto.correoContacto,
       productor: u, categoria: cat,
-      estado: process.env.MODERACION_ACTIVA === 'false' ? EstadoPublicacion.APROBADA : EstadoPublicacion.PENDIENTE,
+      estado: u.rol === Rol.ADMIN || process.env.MODERACION_ACTIVA === 'false' ? EstadoPublicacion.APROBADA : EstadoPublicacion.PENDIENTE,
       ...this.vigencia(cat, dto.duracionDias, dto.fechaEvento),
     });
     return this.pubs.save(p);

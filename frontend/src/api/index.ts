@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { Categoria, MensajeContacto, Pagina, Publicacion, Reporte, SesionRespuesta, Usuario } from '../types';
+import type { Categoria, MensajeContacto, Pagina, ProductorPublico, Publicacion, Reporte, SesionRespuesta, Usuario } from '../types';
 
 export { ApiError, token, alVencerSesion } from './client';
 
@@ -34,10 +34,13 @@ export interface DatosPublicacion {
   titulo: string; descripcion: string; precio: string; ubicacion?: string; categoriaId?: number; subcategoria?: string;
   imagenes?: string[]; telefono?: string; whatsapp?: string; correoContacto?: string; duracionDias?: number; fechaEvento?: string;
 }
+export interface PerfilProductor { productor: ProductorPublico; publicaciones: Publicacion[]; calificacion: { promedio: number | null; cantidad: number } }
 
 export const publicaciones = {
   catalogo: (f: FiltrosCatalogo) => api<Pagina<Publicacion>>('GET', `/publicaciones${query({ ...f })}`, undefined, false),
   detalle: (id: number) => api<Publicacion>('GET', `/publicaciones/${id}`, undefined, false),
+  perfilProductor: (id: string) => api<PerfilProductor>('GET', `/publicaciones/productor/${id}/perfil`, undefined, false),
+  calificarProductor: (id: string, puntuacion: number) => api<{ promedio: number; cantidad: number; puntuacion: number }>('POST', `/publicaciones/productor/${id}/calificaciones`, { puntuacion }),
   mias: () => api<Publicacion[]>('GET', '/publicaciones/mias/lista'),
   crear: (d: DatosPublicacion) => api<Publicacion>('POST', '/publicaciones', d),
   actualizar: (id: number, d: Partial<DatosPublicacion>) => api<Publicacion>('PATCH', `/publicaciones/${id}`, d),
@@ -73,6 +76,7 @@ export const admin = {
   cuentasPendientes: () => api<Usuario[]>('GET', '/admin/usuarios/pendientes'),
   cambiarEstadoUsuario: (id: string, estado: 'ACTIVO' | 'SUSPENDIDO') => api<Usuario>('PATCH', `/admin/usuarios/${id}/estado`, { estado }),
   publicacionesPendientes: () => api<Publicacion[]>('GET', '/admin/publicaciones/pendientes'),
+  publicacionesTodas: () => api<Publicacion[]>('GET', '/admin/publicaciones/todas'),
   moderar: (id: number, decision: 'APROBAR' | 'RECHAZAR', motivo?: string) =>
     api<Publicacion>('PATCH', `/admin/publicaciones/${id}/moderar`, { decision, ...(motivo ? { motivo } : {}) }),
   reportes: () => api<Reporte[]>('GET', '/admin/reportes'),

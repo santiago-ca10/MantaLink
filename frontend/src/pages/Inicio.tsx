@@ -7,6 +7,8 @@ import { Paginacion } from '../components/ui/Paginacion';
 import { TarjetaPublicacion } from '../components/ui/TarjetaPublicacion';
 import { useCarga } from '../hooks/useCarga';
 import { useFavoritos } from '../hooks/useFavoritos';
+import { usePreferencias } from '../context/PreferenciasContext';
+import { t } from '../utils/i18n';
 
 const LIMITE = 12;
 
@@ -35,6 +37,7 @@ export default function Inicio() {
   const cats = useCarga(() => categorias.listar(), []);
   const lista = useCarga(() => publicaciones.catalogo({ q, categoria, categorias: categoriasSeleccionadas, ubicacion, subcategoria, orden, pagina, limite: LIMITE }), [q, categoria, categoriasKey, ubicacion, subcategoria, orden, pagina]);
   const fav = useFavoritos();
+  const { idioma } = usePreferencias();
 
   const cambiar = (cambios: Record<string, string>) => {
     const n = new URLSearchParams(params);
@@ -77,24 +80,24 @@ export default function Inicio() {
   return (
     <section className="screen">
       <div className="hero">
-        <h2>¿Qué necesitas encontrar hoy en Manta?</h2>
+        <h2>{t(idioma, 'hero')}</h2>
         <form className="searchbar" onSubmit={buscar} role="search">
           <div className="search-input-wrap">
             <IconoBuscar />
-            <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Buscar producto o servicio…" aria-label="Buscar producto o servicio" maxLength={80} />
+            <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={t(idioma, 'searchPlaceholder')} aria-label={t(idioma, 'searchPlaceholder')} maxLength={80} />
           </div>
-          <button className="btn btn-primary" type="submit">Buscar</button>
+          <button className="btn btn-primary" type="submit">{t(idioma, 'search')}</button>
           <button className="btn btn-outline" type="button" aria-expanded={filtrosAbiertos} aria-controls="filtros-avanzados"
-            onClick={() => setFiltrosAbiertos((abiertos) => !abiertos)}>Filtros avanzados{hayFiltrosAvanzados ? ' · activos' : ''}</button>
+            onClick={() => setFiltrosAbiertos((abiertos) => !abiertos)}>{t(idioma, 'advancedFilters')}{hayFiltrosAvanzados ? ' · activos' : ''}</button>
         </form>
         {filtrosAbiertos && (
           <form id="filtros-avanzados" className="adv-filters" onSubmit={aplicarFiltrosAvanzados}>
-            <p className="adv-filters-title">Combina una o varias categorías con una vereda o sector.</p>
+            <p className="adv-filters-title">{t(idioma, 'filterInstructions')}</p>
             <label className="field">
-              <span>Vereda o sector</span>
+              <span>{t(idioma, 'location')}</span>
               <input maxLength={80} value={ubicacionBorrador} onChange={(e) => setUbicacionBorrador(e.target.value)} placeholder="Ej. Salitre" />
             </label>
-            <div className="adv-filters-cats" role="group" aria-label="Categorías">
+            <div className="adv-filters-cats" role="group" aria-label={t(idioma, 'category')}>
               {cats.datos?.map((c) => (
                 <label key={c.id} className="adv-cat-check">
                   <input type="checkbox" checked={categoriasBorrador.includes(c.nombre)}
@@ -107,16 +110,16 @@ export default function Inicio() {
             </div>
             {subcategoriasAvanzadas.length > 0 && (
               <label className="field">
-                <span>Tipo específico</span>
+                <span>{t(idioma, 'subtype')}</span>
                 <select value={subcategoriaBorrador} onChange={(e) => setSubcategoriaBorrador(e.target.value)}>
-                  <option value="">Cualquiera</option>
+                  <option value="">{t(idioma, 'any')}</option>
                   {subcategoriasAvanzadas.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </label>
             )}
             <div className="adv-filters-actions">
-              <button className="btn btn-outline" type="button" onClick={limpiarFiltrosAvanzados}>Limpiar</button>
-              <button className="btn btn-primary" type="submit">Aplicar filtros</button>
+              <button className="btn btn-outline" type="button" onClick={limpiarFiltrosAvanzados}>{t(idioma, 'clear')}</button>
+              <button className="btn btn-primary" type="submit">{t(idioma, 'apply')}</button>
             </div>
           </form>
         )}
@@ -124,7 +127,7 @@ export default function Inicio() {
 
       <div className="chips-row">
         <div className="chips" role="group" aria-label="Categorías">
-          <button className={`chip${!categoria ? ' active' : ''}`} aria-pressed={!categoria} onClick={() => cambiar({ categoria: '', categorias: '', subcategoria: '' })}>Todos</button>
+          <button className={`chip${!categoria ? ' active' : ''}`} aria-pressed={!categoria} onClick={() => cambiar({ categoria: '', categorias: '', subcategoria: '' })}>{t(idioma, 'all')}</button>
           {cats.datos?.map((c) => (
             <button key={c.id} className={`chip${categoria === c.nombre ? ' active' : ''}`} aria-pressed={categoria === c.nombre}
                 onClick={() => cambiar({ categoria: c.nombre, categorias: '', subcategoria: '' })}>{c.nombre}</button>
@@ -141,23 +144,23 @@ export default function Inicio() {
             </select>
           )}
           <select aria-label="Ordenar resultados" value={orden} onChange={(e) => cambiar({ orden: e.target.value === 'recientes' ? '' : e.target.value })}>
-            <option value="recientes">Más recientes</option>
-            <option value="precio_asc">Precio: de menor a mayor</option>
-            <option value="precio_desc">Precio: de mayor a menor</option>
+            <option value="recientes">{idioma === 'en' ? 'Most recent' : 'Más recientes'}</option>
+            <option value="precio_asc">{idioma === 'en' ? 'Price: low to high' : 'Precio: de menor a mayor'}</option>
+            <option value="precio_desc">{idioma === 'en' ? 'Price: high to low' : 'Precio: de mayor a menor'}</option>
           </select>
         </div>
-        {(q || categoria || categoriasSeleccionadas.length > 0 || ubicacion || subcategoria) && <button className="text-link" onClick={() => setParams({})}>Quitar filtros</button>}
+        {(q || categoria || categoriasSeleccionadas.length > 0 || ubicacion || subcategoria) && <button className="text-link" onClick={() => setParams({})}>{t(idioma, 'removeFilters')}</button>}
       </div>
 
       <div className="section-title">
-        <h3>{q ? `Resultados para “${q}”` : categoria || 'Publicaciones recientes'}</h3>
-        {lista.datos && <span style={{ color: 'var(--ink-soft)', fontSize: '.88rem' }}>{lista.datos.total} {lista.datos.total === 1 ? 'resultado' : 'resultados'}</span>}
+        <h3>{q ? `${t(idioma, 'resultsFor')} “${q}”` : categoria || t(idioma, 'recent')}</h3>
+        {lista.datos && <span style={{ color: 'var(--ink-soft)', fontSize: '.88rem' }}>{lista.datos.total} {idioma === 'en' ? (lista.datos.total === 1 ? 'result' : 'results') : (lista.datos.total === 1 ? 'resultado' : 'resultados')}</span>}
       </div>
 
       <ErrorMensaje texto={lista.error} />
       {lista.error && <button className="btn btn-outline" onClick={lista.recargar}>Reintentar</button>}
       {lista.cargando && !lista.datos ? <Cargando /> : null}
-      {lista.datos && lista.datos.items.length === 0 && <Vacio titulo="No encontramos nada con esos filtros" texto="Prueba con otra palabra o quita los filtros." />}
+      {lista.datos && lista.datos.items.length === 0 && <Vacio titulo={t(idioma, 'noResults')} texto={t(idioma, 'noResultsHelp')} />}
       {lista.datos && lista.datos.items.length > 0 && (
         <div className="grid" aria-busy={lista.cargando}>
           {lista.datos.items.map((p) => <TarjetaPublicacion key={p.id} p={p} esFavorito={fav.ids.has(p.id)} onFavorito={fav.alternar} />)}

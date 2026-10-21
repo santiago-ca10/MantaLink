@@ -2,14 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { IconoMenu } from './iconos';
+import { usePreferencias } from '../../context/PreferenciasContext';
+import { t } from '../../utils/i18n';
 
 export function Encabezado() {
   const { usuario, esAdmin, puedePublicar, cerrarSesion } = useAuth();
+  const { idioma } = usePreferencias();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [masAbierto, setMasAbierto] = useState(false);
   const ubicacion = useLocation();
   const navegar = useNavigate();
   const masRef = useRef<HTMLDivElement>(null);
+  const esVistaServicios = ubicacion.pathname === '/' && new URLSearchParams(ubicacion.search).get('categoria') === 'Servicios';
 
   // Al cambiar de pantalla se cierran los menús
   useEffect(() => { setMenuAbierto(false); setMasAbierto(false); }, [ubicacion.pathname]);
@@ -31,27 +35,27 @@ export function Encabezado() {
         <div className="more-menu" ref={masRef}>
           <button className="icon-btn more-toggle" aria-haspopup="true" aria-expanded={masAbierto} onClick={() => setMasAbierto((v) => !v)}>
             <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17" aria-hidden="true"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
-            <span>Más</span>
+            <span>{t(idioma, 'more')}</span>
           </button>
           <div className={`more-dropdown${masAbierto ? ' open' : ''}`}>
-            <button onClick={() => navegar('/ayuda')}>? Ayuda</button>
-            <button onClick={() => navegar('/configuracion')}>Configuración</button>
-            <button onClick={() => navegar('/contacto')}>Contacto</button>
-            <button onClick={() => navegar('/privacidad')}>Privacidad</button>
+            <button onClick={() => navegar('/ayuda')}>? {t(idioma, 'help')}</button>
+            <button onClick={() => navegar('/configuracion')}>{t(idioma, 'settings')}</button>
+            <button onClick={() => navegar('/contacto')}>{t(idioma, 'contact')}</button>
+            <button onClick={() => navegar('/privacidad')}>{t(idioma, 'privacy')}</button>
           </div>
         </div>
 
         <button className="menu-toggle" aria-label="Abrir menú" aria-expanded={menuAbierto} onClick={() => setMenuAbierto((v) => !v)}><IconoMenu /></button>
 
         <nav className={`mainnav${menuAbierto ? ' open' : ''}`} aria-label="Principal">
-          <NavLink to="/" end className={clase}>Inicio</NavLink>
-          <NavLink to="/?categoria=Servicios" className={() => (ubicacion.search.includes('Servicios') ? 'active' : undefined)}>Servicios</NavLink>
-          {usuario && !esAdmin && <NavLink to="/vender" id="navVender" className={clase}>+ Vender</NavLink>}
-          {usuario && <NavLink to="/favoritos" className={clase}>♥ Favoritos</NavLink>}
-          {usuario && <NavLink to="/perfil" id="navPerfil" className={clase}>Perfil</NavLink>}
-          {esAdmin && <NavLink to="/admin" className={clase}>🛠 Admin</NavLink>}
-          {!usuario && <NavLink to="/ingresar" id="navLogin" className={clase}>Ingresar</NavLink>}
-          {usuario && <button onClick={() => { cerrarSesion(); navegar('/'); }}>Salir</button>}
+          <NavLink to="/" end className={({ isActive }) => (isActive && !esVistaServicios ? 'active' : undefined)}>{t(idioma, 'home')}</NavLink>
+          <NavLink to="/?categoria=Servicios" className={() => (esVistaServicios ? 'active' : undefined)}>{t(idioma, 'services')}</NavLink>
+          {usuario && !esAdmin && <NavLink to="/vender" id="navVender" className={clase}>{t(idioma, 'publish')}</NavLink>}
+          {usuario && <NavLink to="/favoritos" className={clase}>{t(idioma, 'favorites')}</NavLink>}
+          {usuario && <NavLink to="/perfil" id="navPerfil" className={clase}>{t(idioma, 'profile')}</NavLink>}
+          {esAdmin && <NavLink to="/admin" className={clase}>{t(idioma, 'admin')}</NavLink>}
+          {!usuario && <NavLink to="/ingresar" id="navLogin" className={clase}>{t(idioma, 'login')}</NavLink>}
+          {usuario && <button onClick={() => { cerrarSesion(); navegar('/'); }}>{t(idioma, 'logout')}</button>}
         </nav>
       </div>
       {usuario && !esAdmin && !puedePublicar && usuario.estado === 'PENDIENTE' && (

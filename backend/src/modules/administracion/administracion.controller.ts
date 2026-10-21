@@ -10,6 +10,7 @@ import { ActualizarCategoriaDto, CambiarEstadoUsuarioDto, CrearCategoriaDto, Des
 export class AdministracionController {
   constructor(private s: AdministracionService) {}
   @Get('publicaciones/pendientes') publicacionesPendientes() { return this.s.publicacionesPendientes(); }
+  @Get('publicaciones/todas') publicacionesTodas() { return this.s.publicacionesTodas(); }
   @Get('usuarios/pendientes') cuentasPendientes() { return this.s.cuentasPendientes(); }
   @Patch('publicaciones/:id/moderar')
   moderar(@Param('id', ParseIntPipe) id: number, @UsuarioActual() a: JwtUser, @Body() dto: ModerarPublicacionDto) { return this.s.moderar(id, a.sub, dto); }

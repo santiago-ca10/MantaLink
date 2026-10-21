@@ -15,6 +15,7 @@ export class AdministracionService {
   ) {}
 
   publicacionesPendientes() { return this.pubs.find({ where: { estado: EstadoPublicacion.PENDIENTE }, order: { creadoEn: 'ASC' } }); }
+  publicacionesTodas() { return this.pubs.find({ order: { creadoEn: 'DESC' }, take: 200 }); }
   cuentasPendientes() { return this.usuarios.find({ where: { estado: EstadoUsuario.PENDIENTE }, order: { creadoEn: 'ASC' } }); }
 
   async moderar(id: number, adminId: string, dto: ModerarPublicacionDto) {

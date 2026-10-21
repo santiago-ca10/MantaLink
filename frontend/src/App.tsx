@@ -7,6 +7,7 @@ import Inicio from './pages/Inicio';
 
 // Las pantallas menos usadas se cargan solo cuando se visitan (la página inicial carga más rápido)
 const Detalle = lazy(() => import('./pages/Detalle'));
+const PerfilPublico = lazy(() => import('./pages/PerfilPublico'));
 const Ingresar = lazy(() => import('./pages/Ingresar'));
 const OlvideContrasena = lazy(() => import('./pages/OlvideContrasena'));
 const RestablecerContrasena = lazy(() => import('./pages/RestablecerContrasena'));
@@ -29,6 +30,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<Inicio />} />
           <Route path="oferta/:id" element={<Detalle />} />
+          <Route path="productor/:id" element={<PerfilPublico />} />
           <Route path="ingresar" element={<Ingresar />} />
           <Route path="contacto" element={<Contacto />} />
           <Route path="olvide-contrasena" element={<OlvideContrasena />} />
@@ -43,6 +45,7 @@ export default function App() {
           <Route path="favoritos" element={<RutaProtegida><Favoritos /></RutaProtegida>} />
           <Route path="perfil" element={<RutaProtegida><Perfil /></RutaProtegida>} />
           <Route path="admin" element={<RutaProtegida soloAdmin><Admin /></RutaProtegida>} />
+          <Route path="admin/eventos/nuevo" element={<RutaProtegida soloAdmin><PublicacionForm soloEventos /></RutaProtegida>} />
           <Route path="*" element={<NoEncontrada />} />
         </Route>
       </Routes>

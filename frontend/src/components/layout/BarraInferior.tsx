@@ -9,7 +9,7 @@ export function BarraInferior() {
   return (
     <nav className="bottom-nav" aria-label="Acceso rápido">
       <NavLink to="/" end className={clase}><IconoInicio /><span>Inicio</span></NavLink>
-      {usuario && !esAdmin && <NavLink to="/vender" className={clase}><IconoMas /><span>Vender</span></NavLink>}
+      {usuario && !esAdmin && <NavLink to="/vender" className={clase}><IconoMas /><span>Publicar</span></NavLink>}
       {usuario ? <NavLink to={esAdmin ? '/admin' : '/perfil'} className={clase}><IconoPerfil /><span>{esAdmin ? 'Admin' : 'Perfil'}</span></NavLink>
         : <NavLink to="/ingresar" className={clase}><IconoEntrar /><span>Ingresar</span></NavLink>}
     </nav>

@@ -82,6 +82,9 @@ test('flujo: verificar → publicar → pendiente invisible → aprobar → visi
   assert.equal((await call('PATCH', `/admin/publicaciones/${pubId}/moderar`, { decision: 'RECHAZAR' }, adminToken)).status, 400); // rechazo exige motivo
   assert.equal((await call('PATCH', `/admin/publicaciones/${pubId}/moderar`, { decision: 'APROBAR' }, adminToken)).status, 200);
   assert.equal((await call('GET', '/publicaciones?q=queso')).body.total, 1);
+  const todas = await call('GET', '/admin/publicaciones/todas', undefined, adminToken);
+  assert.equal(todas.status, 200);
+  assert.ok(todas.body.some((p: any) => p.id === pubId));
 });
 test('validación de vigencia y datos', async () => {
   assert.equal((await call('POST', '/publicaciones', oferta({ duracionDias: 999 }), prodToken)).status, 400);
@@ -96,6 +99,37 @@ test('un productor no puede tocar publicaciones ajenas', async () => {
   const t = (await call('POST', '/auth/login', { correo: 'otro@test.com', contrasena: 'clave12345' })).body.token;
   assert.equal((await call('PATCH', `/publicaciones/${pubId}`, { titulo: 'hack' }, t)).status, 403);
   assert.equal((await call('DELETE', `/publicaciones/${pubId}`, undefined, t)).status, 403);
+});
+test('perfil público: agrupa publicaciones y permite una calificación actualizable por cuenta', async () => {
+  const perfilAntes = await call('GET', `/publicaciones/productor/${prodId}/perfil`);
+  assert.equal(perfilAntes.status, 200);
+  assert.equal(perfilAntes.body.productor.id, prodId);
+  assert.ok(perfilAntes.body.publicaciones.some((p: any) => p.id === pubId));
+  assert.equal(perfilAntes.body.calificacion.cantidad, 0);
+
+  assert.equal((await call('POST', `/publicaciones/productor/${prodId}/calificaciones`, { puntuacion: 5 }, prodToken)).status, 400);
+  await call('POST', '/auth/registro', registro('votante@test.com'));
+  const votante = await ds.getRepository(Usuario).findOneByOrFail({ correo: 'votante@test.com' });
+  await call('PATCH', `/admin/usuarios/${votante.id}/estado`, { estado: 'ACTIVO' }, adminToken);
+  const votanteToken = (await call('POST', '/auth/login', { correo: 'votante@test.com', contrasena: 'clave12345' })).body.token;
+  assert.equal((await call('POST', `/publicaciones/productor/${prodId}/calificaciones`, { puntuacion: 5 }, votanteToken)).body.cantidad, 1);
+  const actualizada = await call('POST', `/publicaciones/productor/${prodId}/calificaciones`, { puntuacion: 3 }, votanteToken);
+  assert.equal(actualizada.body.promedio, 3);
+  assert.equal(actualizada.body.cantidad, 1);
+  assert.equal((await call('POST', `/publicaciones/productor/${prodId}/calificaciones`, { puntuacion: 6 }, votanteToken)).status, 400);
+  const perfilDespues = await call('GET', `/publicaciones/productor/${prodId}/perfil`);
+  assert.equal(perfilDespues.body.calificacion.promedio, 3);
+  assert.equal(perfilDespues.body.calificacion.cantidad, 1);
+});
+test('eventos: solo administradores pueden publicarlos y se muestran aprobados', async () => {
+  const categoria = await call('POST', '/admin/categorias', { nombre: 'Eventos de prueba', diasMin: 1, diasMax: 1, esEvento: true }, adminToken);
+  assert.equal(categoria.status, 201);
+  const evento = oferta({ categoriaId: categoria.body.id, fechaEvento: '2099-12-31' });
+  assert.equal((await call('POST', '/publicaciones', evento, prodToken)).status, 403);
+  const publicado = await call('POST', '/publicaciones', evento, adminToken);
+  assert.equal(publicado.status, 201);
+  assert.equal(publicado.body.estado, 'APROBADA');
+  assert.equal((await call('GET', `/publicaciones/${publicado.body.id}`)).status, 200);
 });
 test('búsqueda: comodines SQL se tratan como texto y números gigantes no rompen el orden', async () => {
   assert.equal((await call('GET', '/publicaciones?q=%25')).body.total, 0);

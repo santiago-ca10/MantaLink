@@ -9,6 +9,7 @@ import { useCarga } from '../hooks/useCarga';
 import { useFavoritos } from '../hooks/useFavoritos';
 import { MOTIVOS_REPORTE } from '../types';
 import { diasHasta, enlaceLlamada, enlaceWhatsApp, fechaCorta } from '../utils/format';
+import { compartir } from '../utils/compartir';
 
 export default function Detalle() {
   const { id } = useParams();
@@ -46,6 +47,12 @@ export default function Detalle() {
     } catch (err) { setErrReporte(err instanceof ApiError ? err.message : 'No se pudo enviar el reporte'); }
     finally { setEnviando(false); }
   };
+  const compartirDetalle = async () => {
+    try {
+      const resultado = await compartir(`/oferta/${p.id}`, p.titulo);
+      if (resultado === 'copiado') avisar('Enlace copiado.');
+    } catch (err) { avisar(err instanceof Error ? err.message : 'No se pudo compartir la publicación.'); }
+  };
 
   return (
     <section className="screen">
@@ -64,7 +71,11 @@ export default function Detalle() {
 
           <div className="seller-box">
             <div className="avatar" aria-hidden="true">{vendedor.charAt(0).toUpperCase()}</div>
-            <div><strong>{vendedor}</strong><div className="seller">{p.productor.vereda ? `Vereda/barrio: ${p.productor.vereda}` : 'Manta, Cundinamarca'}</div></div>
+            <div>
+              <Link to={`/productor/${p.productor.id}`} className="link"><strong>{vendedor}</strong></Link>
+              <div className="seller">{p.productor.vereda ? `Vereda/barrio: ${p.productor.vereda}` : 'Manta, Cundinamarca'}</div>
+              <Link to={`/productor/${p.productor.id}`} className="link">Ver perfil y calificar ★</Link>
+            </div>
           </div>
 
           <div className="contact-row">
@@ -73,6 +84,7 @@ export default function Detalle() {
             {p.correoContacto && <a className="btn btn-outline" href={`mailto:${encodeURIComponent(p.correoContacto)}`}>Escribir correo</a>}
             {!wa && !llamar && !p.correoContacto && <p className="seller">Este productor aún no dejó datos de contacto.</p>}
             <button className="btn btn-outline" aria-pressed={fav.ids.has(p.id)} onClick={() => fav.alternar(p)}>{fav.ids.has(p.id) ? '♥ Guardado' : '♡ Guardar'}</button>
+            <button className="btn btn-outline" onClick={compartirDetalle}>Compartir</button>
           </div>
 
           <div className="report-box">

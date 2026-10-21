@@ -16,7 +16,7 @@ backend/
 │   │   ├── guards/              #   JwtAuthGuard (sesión), RolesGuard (permisos)
 │   │   └── decorators/          #   @Roles(), @UsuarioActual()
 │   ├── database/
-│   │   ├── entities/            # las 6 clases del diagrama (tablas)
+│   │   ├── entities/            # entidades de base de datos
 │   │   └── seed/                # datos iniciales de ejemplo
 │   └── modules/                 # UNA carpeta por módulo (sección 6.4.2 del documento)
 │       ├── auth/                #   registro, login, perfil, cambiar y recuperar contraseña
@@ -69,12 +69,17 @@ Cuentas de prueba (solo desarrollo): `admin@mail.com / admin` y `productor.x@mai
 | GET | `/api/publicaciones/:id` | Público |
 | GET | `/api/categorias` | Público |
 | POST | `/api/auth/registro`, `/api/auth/login` · GET `/api/auth/me` | Público / sesión |
-| POST/PATCH/DELETE | `/api/publicaciones` · `/:id` · `/:id/agotada` · GET `/mias/lista` | Productor verificado |
+| POST/PATCH/DELETE | `/api/publicaciones` · `/:id` · `/:id/agotada` · GET `/mias/lista` | Productor verificado (y admin donde aplique) |
+| GET | `/api/publicaciones/productor/:id/perfil` | Público |
+| POST | `/api/publicaciones/productor/:id/calificaciones` | Productor o admin con sesión |
 | GET | `/api/admin/publicaciones/pendientes`, `/api/admin/usuarios/pendientes` | Admin |
+| GET | `/api/admin/publicaciones/todas` | Admin |
 | PATCH | `/api/admin/publicaciones/:id/moderar`, `/api/admin/usuarios/:id/estado` | Admin |
 
 Además: `POST /api/publicaciones/:id/reportar` (público), `GET/POST/DELETE /api/favoritos`, `GET /api/admin/reportes`,
 `PATCH /api/admin/reportes/:id/resolver`, `POST /api/auth/cambiar-contrasena`.
+
+Los eventos solo los pueden crear administradores y quedan aprobados al publicarse. Las calificaciones son de 1 a 5; cada cuenta puede tener una calificación por productor y actualizarla posteriormente.
 
 **Fotos:** `POST /api/archivos` (multipart, campo `archivo`, solo productores, JPG/PNG/WebP hasta 5 MB) devuelve `{ url: "/api/archivos/<uuid>.jpg" }`;
 esa ruta se manda luego en `imagenes` al crear/editar la oferta. `GET /api/archivos/:nombre` es público. Se valida el tipo
@@ -91,7 +96,7 @@ mensajes `GET /api/admin/mensajes?pendientes=true`, `PATCH /:id/atendido`. Públ
 Las fotos que ninguna publicación usa se borran del disco solas cada 24 h (solo las de más de 24 h).
 
 ## Pruebas
-`cd backend && npm test` — 22 pruebas de integración (necesita la BD `mantalink_test`).
+`cd backend && npm test` — 24 pruebas de integración (necesita la BD `mantalink_test`).
 
 ## Seguridad: qué hay y qué falta
 Hecho: hash bcrypt, JWT con rol/estado verificados en BD en cada petición (suspender tiene efecto inmediato), roles,
