@@ -4,6 +4,7 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = process.env.TEST_DATABASE_URL ?? 'postgres://mantalink:mantalink@localhost:5432/mantalink_test';
 process.env.JWT_SECRET = 'secreto-de-pruebas-con-mas-de-32-caracteres-xx';
 process.env.MODERACION_ACTIVA = 'true';
+process.env.UPLOADS_DIR = require('os').tmpdir() + '/mantalink-test-uploads-' + process.pid; // fotos de prueba, fuera del proyecto
 process.env.THROTTLE_OFF = '1'; // se reactiva solo en la prueba de límite de intentos
 
 import 'reflect-metadata';
@@ -15,6 +16,7 @@ import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { CorreoService } from '../src/modules/correo/correo.service';
+import { ArchivosService } from '../src/modules/archivos/archivos.service';
 import { Categoria, EstadoUsuario, Rol, Usuario } from '../src/database/entities';
 
 let app: any, base: string, ds: DataSource;
@@ -38,7 +40,7 @@ before(async () => {
   await ds.getRepository(Usuario).save({ nombre: 'Admin', correo: 'admin@test.com', rol: Rol.ADMIN, estado: EstadoUsuario.ACTIVO, contrasenaHash: await bcrypt.hash('adminpass1', 4) });
   adminToken = (await call('POST', '/auth/login', { correo: 'admin@test.com', contrasena: 'adminpass1' })).body.token;
 });
-after(async () => { await app.close(); });
+after(async () => { await app.close(); require('fs').rmSync(process.env.UPLOADS_DIR!, { recursive: true, force: true }); });
 
 test('registro: no permite auto-asignarse rol ni estado', async () => {
   const r = await call('POST', '/auth/registro', { ...registro('a@test.com'), rol: 'ADMIN', estado: 'ACTIVO' });
@@ -114,7 +116,6 @@ test('reportes: público puede reportar; admin decide; queda historial', async (
   assert.deepEqual(h.map((x: any) => x.decision), ['APROBAR', 'OCULTAR']);
 });
 test('subida de fotos: solo imágenes reales, solo productores, y el nombre lo pone el servidor', async () => {
-  process.env.UPLOADS_DIR = require('os').tmpdir() + '/mantalink-test-uploads';
   const subir = async (bytes: Buffer, nombre: string, token?: string) => {
     const fd = new FormData(); fd.append('archivo', new Blob([new Uint8Array(bytes)]), nombre);
     const r = await fetch(base + '/archivos', { method: 'POST', headers: token ? { Authorization: `Bearer ${token}` } : {}, body: fd });
@@ -142,6 +143,85 @@ test('subida de fotos: solo imágenes reales, solo productores, y el nombre lo p
   assert.equal((await call('POST', '/publicaciones', oferta({ imagenes: [ok.body.url, 'https://ejemplo.com/a.jpg'] }), prodToken)).status, 201);
   assert.equal((await call('POST', '/publicaciones', oferta({ imagenes: ['/api/archivos/../../x.png'] }), prodToken)).status, 400);
   assert.equal((await call('POST', '/publicaciones', oferta({ imagenes: ['javascript:alert(1)'] }), prodToken)).status, 400);
+});
+test('perfil: solo se editan los datos permitidos', async () => {
+  const ok = await call('PATCH', '/auth/perfil', { nombre: 'Prueba Editada', telefono: '311 555 9999', vereda: 'La Fragua', nombreNegocio: '' }, prodToken);
+  assert.equal(ok.status, 200);
+  assert.equal(ok.body.nombre, 'Prueba Editada'); assert.equal(ok.body.vereda, 'La Fragua'); assert.equal(ok.body.nombreNegocio, null);
+  assert.equal((await call('PATCH', '/auth/perfil', { rol: 'ADMIN' }, prodToken)).status, 400);
+  assert.equal((await call('PATCH', '/auth/perfil', { estado: 'ACTIVO' }, prodToken)).status, 400);
+  assert.equal((await call('PATCH', '/auth/perfil', { correo: 'otro@x.com' }, prodToken)).status, 400);
+  assert.equal((await call('PATCH', '/auth/perfil', { telefono: 'abc<script>' }, prodToken)).status, 400);
+  assert.equal((await call('PATCH', '/auth/perfil', { nombre: 'x' })).status, 401);
+});
+test('admin: lista usuarios con filtros y no puede suspender a otro admin', async () => {
+  assert.equal((await call('GET', '/admin/usuarios', undefined, prodToken)).status, 403);
+  const todos = await call('GET', '/admin/usuarios', undefined, adminToken);
+  assert.equal(todos.status, 200); assert.ok(todos.body.total >= 2);
+  assert.ok(todos.body.items.every((u: any) => u.rol === 'PRODUCTOR' && u.contrasenaHash === undefined));
+  const f = await call('GET', '/admin/usuarios?q=Prueba%20Editada&estado=ACTIVO', undefined, adminToken);
+  assert.equal(f.body.items.length, 1);
+  assert.equal((await call('GET', '/admin/usuarios?q=%25', undefined, adminToken)).body.total, 0); // el comodín % es texto
+  assert.equal((await call('GET', '/admin/usuarios?estado=XX', undefined, adminToken)).status, 400);
+  const adminId = (await call('GET', '/auth/me', undefined, adminToken)).body.id;
+  assert.equal((await call('PATCH', `/admin/usuarios/${adminId}/estado`, { estado: 'SUSPENDIDO' }, adminToken)).status, 400);
+});
+test('categorías: crear, editar, desactivar con reasignación obligatoria', async () => {
+  assert.equal((await call('POST', '/admin/categorias', { nombre: 'Pruebas', diasMin: 1, diasMax: 30 }, prodToken)).status, 403);
+  const c = await call('POST', '/admin/categorias', { nombre: 'Pruebas', descripcion: 'x', diasMin: 1, diasMax: 30, subcategorias: ['A', 'B'] }, adminToken);
+  assert.equal(c.status, 201); const id = c.body.id;
+  assert.equal((await call('POST', '/admin/categorias', { nombre: 'pruebas', diasMin: 1, diasMax: 30 }, adminToken)).status, 409); // duplicada sin importar mayúsculas
+  assert.equal((await call('POST', '/admin/categorias', { nombre: 'Mala', diasMin: 10, diasMax: 5 }, adminToken)).status, 400);
+  assert.equal((await call('PATCH', `/admin/categorias/${id}`, { nombre: 'Pruebas 2', subcategorias: ['A', 'a'] }, adminToken)).status, 400); // repetidas
+  assert.equal((await call('PATCH', `/admin/categorias/${id}`, { nombre: 'Pruebas 2' }, adminToken)).body.nombre, 'Pruebas 2');
+  assert.ok((await call('GET', '/categorias')).body.some((x: any) => x.id === id));
+
+  // una oferta en la categoría nueva
+  const p = await call('POST', '/publicaciones', oferta({ categoriaId: id, subcategoria: 'A' }), prodToken);
+  assert.equal(p.status, 201);
+  assert.equal((await call('PATCH', `/admin/categorias/${id}`, { esEvento: true }, adminToken)).status, 400); // ya tiene ofertas
+
+  // desactivar: obliga a reasignar, y el destino debe ser válido
+  assert.equal((await call('POST', `/admin/categorias/${id}/desactivar`, {}, adminToken)).status, 400);
+  assert.equal((await call('POST', `/admin/categorias/${id}/desactivar`, { reasignarAId: id }, adminToken)).status, 400);
+  assert.equal((await call('POST', `/admin/categorias/${id}/desactivar`, { reasignarAId: 9999 }, adminToken)).status, 400);
+  assert.equal((await call('POST', `/admin/categorias/${id}/desactivar`, { reasignarAId: 1 }, adminToken)).status, 201);
+  const movida = (await call('GET', '/publicaciones/mias/lista', undefined, prodToken)).body.find((x: any) => x.id === p.body.id);
+  assert.equal(movida.categoria.id, 1); assert.equal(movida.subcategoria, null);
+  assert.ok(!(await call('GET', '/categorias')).body.some((x: any) => x.id === id)); // ya no sale en el portal
+  assert.equal((await call('POST', '/publicaciones', oferta({ categoriaId: id }), prodToken)).status, 400); // ni acepta ofertas nuevas
+  const todas = (await call('GET', '/admin/categorias', undefined, adminToken)).body;
+  assert.equal(todas.find((x: any) => x.id === id).activa, false);
+  assert.ok(todas.find((x: any) => x.id === 1).totalPublicaciones >= 1);
+  assert.equal((await call('POST', `/admin/categorias/${id}/activar`, {}, adminToken)).body.activa, true);
+});
+test('contacto: público, validado, guardado y visible para el admin', async () => {
+  const enviados: string[] = [];
+  app.get(CorreoService).enviar = async (para: string) => { enviados.push(para); };
+  const m = { nombre: 'Visitante', correo: 'visita@test.com', asunto: 'Una duda', mensaje: 'Quisiera saber cómo publicar mi producto' };
+  assert.equal((await call('POST', '/contacto', { ...m, correo: 'malo' })).status, 400);
+  assert.equal((await call('POST', '/contacto', { ...m, mensaje: 'corto' })).status, 400);
+  assert.equal((await call('POST', '/contacto', { ...m, admin: true })).status, 400);
+  assert.equal((await call('POST', '/contacto', m)).status, 201);
+  assert.ok(enviados.includes('visita@test.com')); // confirmación al visitante
+  assert.equal((await call('GET', '/admin/mensajes', undefined, prodToken)).status, 403);
+  const lista = (await call('GET', '/admin/mensajes?pendientes=true', undefined, adminToken)).body;
+  assert.equal(lista.length, 1); assert.equal(lista[0].asunto, 'Una duda');
+  assert.equal((await call('PATCH', `/admin/mensajes/${lista[0].id}/atendido`, { atendido: true }, adminToken)).body.atendido, true);
+  assert.equal((await call('GET', '/admin/mensajes?pendientes=true', undefined, adminToken)).body.length, 0);
+});
+test('limpieza de fotos: borra solo las huérfanas con más de 24 h', async () => {
+  const fs = require('fs'); const arch = app.get(ArchivosService);
+  const viejo = (u: string) => { fs.writeFileSync(`${arch.carpeta}/${u}.png`, 'x'); const t = new Date(Date.now() - 48 * 3600_000); fs.utimesSync(`${arch.carpeta}/${u}.png`, t, t); };
+  const huerfana = '11111111-1111-4111-8111-111111111111', usada = '22222222-2222-4222-8222-222222222222', nueva = '33333333-3333-4333-8333-333333333333';
+  viejo(huerfana); viejo(usada); fs.writeFileSync(`${arch.carpeta}/${nueva}.png`, 'x');
+  assert.equal((await call('POST', '/publicaciones', oferta({ imagenes: [`/api/archivos/${usada}.png`] }), prodToken)).status, 201);
+  fs.writeFileSync(`${arch.carpeta}/notas.txt`, 'no es del portal'); // archivos ajenos no se tocan
+  assert.ok((await arch.limpiarHuerfanas()) >= 1);
+  assert.equal(fs.existsSync(`${arch.carpeta}/${huerfana}.png`), false);
+  assert.equal(fs.existsSync(`${arch.carpeta}/${usada}.png`), true);
+  assert.equal(fs.existsSync(`${arch.carpeta}/${nueva}.png`), true);
+  assert.equal(fs.existsSync(`${arch.carpeta}/notas.txt`), true);
 });
 test('suspender una cuenta invalida su sesión al instante y oculta sus ofertas', async () => {
   await call('PATCH', `/admin/usuarios/${prodId}/estado`, { estado: 'SUSPENDIDO' }, adminToken);

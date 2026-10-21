@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
-import { CambiarContrasenaDto, LoginDto, OlvideContrasenaDto, RegistroDto, RestablecerContrasenaDto } from './dto';
+import { ActualizarPerfilDto, CambiarContrasenaDto, LoginDto, OlvideContrasenaDto, RegistroDto, RestablecerContrasenaDto } from './dto';
 import { JwtAuthGuard, JwtUser, UsuarioActual } from '../../common';
 
 @Controller('auth')
@@ -14,6 +14,7 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 60_000 } }) @Post('olvide-contrasena') olvide(@Body() dto: OlvideContrasenaDto) { return this.auth.olvideContrasena(dto); }
   @Throttle({ default: { limit: 8, ttl: 60_000 } }) @Post('restablecer-contrasena') restablecer(@Body() dto: RestablecerContrasenaDto) { return this.auth.restablecerContrasena(dto); }
   @UseGuards(JwtAuthGuard) @Get('me') me(@UsuarioActual() u: JwtUser) { return this.auth.perfil(u.sub); }
+  @UseGuards(JwtAuthGuard) @Patch('perfil') actualizarPerfil(@UsuarioActual() u: JwtUser, @Body() dto: ActualizarPerfilDto) { return this.auth.actualizarPerfil(u.sub, dto); }
   @UseGuards(JwtAuthGuard) @Throttle({ default: { limit: 5, ttl: 60_000 } }) @Post('cambiar-contrasena')
   cambiar(@UsuarioActual() u: JwtUser, @Body() dto: CambiarContrasenaDto) { return this.auth.cambiarContrasena(u.sub, dto); }
 }

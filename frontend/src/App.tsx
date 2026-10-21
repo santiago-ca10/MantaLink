@@ -10,6 +10,7 @@ const Detalle = lazy(() => import('./pages/Detalle'));
 const Ingresar = lazy(() => import('./pages/Ingresar'));
 const OlvideContrasena = lazy(() => import('./pages/OlvideContrasena'));
 const RestablecerContrasena = lazy(() => import('./pages/RestablecerContrasena'));
+const Contacto = lazy(() => import('./pages/Contacto'));
 const Registro = lazy(() => import('./pages/Registro'));
 const MisPublicaciones = lazy(() => import('./pages/MisPublicaciones'));
 const PublicacionForm = lazy(() => import('./pages/PublicacionForm'));
@@ -29,6 +30,7 @@ export default function App() {
           <Route index element={<Inicio />} />
           <Route path="oferta/:id" element={<Detalle />} />
           <Route path="ingresar" element={<Ingresar />} />
+          <Route path="contacto" element={<Contacto />} />
           <Route path="olvide-contrasena" element={<OlvideContrasena />} />
           <Route path="restablecer" element={<RestablecerContrasena />} />
           <Route path="registro" element={<Registro />} />

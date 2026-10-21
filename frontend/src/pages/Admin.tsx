@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { admin, ApiError } from '../api';
+import { admin } from '../api';
 import { Imagen } from '../components/ui/Imagen';
 import { Cargando, ErrorMensaje, Vacio } from '../components/ui/Mensaje';
-import { useToast } from '../context/ToastContext';
 import { useCarga } from '../hooks/useCarga';
 import type { Publicacion, Reporte, Usuario } from '../types';
 import { fechaCorta } from '../utils/format';
+import { Categorias } from './admin/Categorias';
+import { Carga, useAccion } from './admin/comun';
+import { Mensajes } from './admin/Mensajes';
+import { Usuarios } from './admin/Usuarios';
 
-type Vista = 'cuentas' | 'publicaciones' | 'reportes';
+type Vista = 'cuentas' | 'publicaciones' | 'reportes' | 'usuarios' | 'categorias' | 'mensajes';
 
 export default function Admin() {
   const [vista, setVista] = useState<Vista>('cuentas');
@@ -31,20 +34,19 @@ export default function Admin() {
           </button>
         ))}
       </div>
+      <div className="chips" style={{ margin: '4px 0 14px' }} role="tablist" aria-label="Gestión">
+        {([['usuarios', 'Usuarios'], ['categorias', 'Categorías'], ['mensajes', 'Mensajes de contacto']] as const).map(([v, t]) => (
+          <button key={v} role="tab" aria-selected={vista === v} className={`chip${vista === v ? ' active' : ''}`} onClick={() => setVista(v)}>{t}</button>
+        ))}
+      </div>
+      {vista === 'usuarios' && <Usuarios />}
+      {vista === 'categorias' && <Categorias />}
+      {vista === 'mensajes' && <Mensajes />}
       {vista === 'cuentas' && <Cuentas {...cuentas} />}
       {vista === 'publicaciones' && <Publicaciones {...pubs} />}
       {vista === 'reportes' && <Reportes {...reportes} />}
     </section>
   );
-}
-
-interface Carga<T> { datos: T[] | null; cargando: boolean; error: string | null; recargar: () => void }
-
-function useAccion(recargar: () => void) {
-  const avisar = useToast();
-  return async (fn: () => Promise<unknown>, ok: string) => {
-    try { await fn(); avisar(ok); recargar(); } catch (e) { avisar(e instanceof ApiError ? e.message : 'No se pudo completar la acción'); }
-  };
 }
 
 function Cuentas({ datos, cargando, error, recargar }: Carga<Usuario>) {

@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { Categoria, Pagina, Publicacion, Reporte, SesionRespuesta, Usuario } from '../types';
+import type { Categoria, MensajeContacto, Pagina, Publicacion, Reporte, SesionRespuesta, Usuario } from '../types';
 
 export { ApiError, token, alVencerSesion } from './client';
 
@@ -14,6 +14,7 @@ export const auth = {
   me: () => api<Usuario>('GET', '/auth/me'),
   olvideContrasena: (correo: string) => api<{ mensaje: string }>('POST', '/auth/olvide-contrasena', { correo }, false),
   restablecerContrasena: (token: string, nueva: string) => api<{ mensaje: string }>('POST', '/auth/restablecer-contrasena', { token, nueva }, false),
+  actualizarPerfil: (d: { nombre?: string; telefono?: string; vereda?: string; nombreNegocio?: string }) => api<Usuario>('PATCH', '/auth/perfil', d),
   cambiarContrasena: (actual: string, nueva: string) => api<{ mensaje: string }>('POST', '/auth/cambiar-contrasena', { actual, nueva }),
 };
 
@@ -51,7 +52,21 @@ export const favoritos = {
   quitar: (id: number) => api<{ favorito: boolean }>('DELETE', `/favoritos/${id}`),
 };
 
+export const contacto = {
+  enviar: (d: { nombre: string; correo: string; asunto: string; mensaje: string }) => api<{ mensaje: string }>('POST', '/contacto', d, false),
+};
+
+export interface DatosCategoria { nombre?: string; descripcion?: string; diasMin?: number; diasMax?: number; esEvento?: boolean; subcategorias?: string[] }
+
 export const admin = {
+  usuarios: (f: { q?: string; estado?: string; pagina?: number }) => api<Pagina<Usuario>>('GET', `/admin/usuarios${query({ ...f })}`),
+  categorias: () => api<Categoria[]>('GET', '/admin/categorias'),
+  crearCategoria: (d: DatosCategoria & { nombre: string; diasMin: number; diasMax: number }) => api<Categoria>('POST', '/admin/categorias', d),
+  editarCategoria: (id: number, d: DatosCategoria) => api<Categoria>('PATCH', `/admin/categorias/${id}`, d),
+  desactivarCategoria: (id: number, reasignarAId?: number) => api<Categoria>('POST', `/admin/categorias/${id}/desactivar`, reasignarAId ? { reasignarAId } : {}),
+  activarCategoria: (id: number) => api<Categoria>('POST', `/admin/categorias/${id}/activar`),
+  mensajes: (soloPendientes: boolean) => api<MensajeContacto[]>('GET', `/admin/mensajes${soloPendientes ? '?pendientes=true' : ''}`),
+  marcarMensaje: (id: number, atendido: boolean) => api<MensajeContacto>('PATCH', `/admin/mensajes/${id}/atendido`, { atendido }),
   cuentasPendientes: () => api<Usuario[]>('GET', '/admin/usuarios/pendientes'),
   cambiarEstadoUsuario: (id: string, estado: 'ACTIVO' | 'SUSPENDIDO') => api<Usuario>('PATCH', `/admin/usuarios/${id}/estado`, { estado }),
   publicacionesPendientes: () => api<Publicacion[]>('GET', '/admin/publicaciones/pendientes'),

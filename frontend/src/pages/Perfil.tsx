@@ -9,14 +9,24 @@ import { useToast } from '../context/ToastContext';
 const ESTADO = { PENDIENTE: '⏳ Cuenta en verificación', ACTIVO: '✓ Cuenta verificada', SUSPENDIDO: 'Cuenta suspendida' } as const;
 
 export default function Perfil() {
-  const { usuario, cerrarSesion } = useAuth();
+  const { usuario, cerrarSesion, refrescar } = useAuth();
   const avisar = useToast();
   const navegar = useNavigate();
   const [actual, setActual] = useState('');
   const [nueva, setNueva] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [editando, setEditando] = useState(false);
+  const [datos, setDatos] = useState({ nombre: '', telefono: '', vereda: '', nombreNegocio: '' });
+  const [errorPerfil, setErrorPerfil] = useState<string | null>(null);
   if (!usuario) return null;
+
+  const empezarEdicion = () => { setDatos({ nombre: usuario.nombre, telefono: usuario.telefono ?? '', vereda: usuario.vereda ?? '', nombreNegocio: usuario.nombreNegocio ?? '' }); setErrorPerfil(null); setEditando(true); };
+  const guardarPerfil = async (e: FormEvent) => {
+    e.preventDefault(); setErrorPerfil(null);
+    try { await auth.actualizarPerfil(datos); await refrescar(); avisar('Datos actualizados'); setEditando(false); }
+    catch (err) { setErrorPerfil(err instanceof ApiError ? err.message : 'No se pudieron guardar los datos'); }
+  };
 
   const cambiar = async (e: FormEvent) => {
     e.preventDefault(); setError(null); setEnviando(true);
@@ -37,6 +47,22 @@ export default function Perfil() {
           {usuario.telefono && <><dt className="seller">Teléfono</dt><dd style={{ margin: '0 0 8px' }}>{usuario.telefono}</dd></>}
           {usuario.nombreNegocio && <><dt className="seller">Negocio</dt><dd style={{ margin: '0 0 8px' }}>{usuario.nombreNegocio}</dd></>}
         </dl>
+
+        {!editando && usuario.rol === 'PRODUCTOR' && <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', marginTop: 14 }} onClick={empezarEdicion}>Editar mis datos</button>}
+        {editando && (
+          <form onSubmit={guardarPerfil} style={{ textAlign: 'left' }}>
+            <h4 className="contact-title">Mis datos</h4>
+            <Campo etiqueta="Nombre completo" requerido>{(id) => <input id={id} required minLength={2} maxLength={100} value={datos.nombre} onChange={(e) => setDatos({ ...datos, nombre: e.target.value })} />}</Campo>
+            <Campo etiqueta="Teléfono">{(id) => <input id={id} type="tel" maxLength={20} value={datos.telefono} onChange={(e) => setDatos({ ...datos, telefono: e.target.value })} placeholder="300 000 0000" />}</Campo>
+            <Campo etiqueta="Vereda o barrio">{(id) => <input id={id} maxLength={80} value={datos.vereda} onChange={(e) => setDatos({ ...datos, vereda: e.target.value })} />}</Campo>
+            <Campo etiqueta="Nombre del negocio (opcional)">{(id) => <input id={id} maxLength={100} value={datos.nombreNegocio} onChange={(e) => setDatos({ ...datos, nombreNegocio: e.target.value })} />}</Campo>
+            <ErrorMensaje texto={errorPerfil} />
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }}>Guardar</button>
+              <button type="button" className="btn btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setEditando(false)}>Cancelar</button>
+            </div>
+          </form>
+        )}
 
         <form onSubmit={cambiar} style={{ textAlign: 'left' }}>
           <h4 className="contact-title">Cambiar contraseña</h4>

@@ -26,6 +26,7 @@ backend/
 │       ├── auth/                #   registro, login, perfil, cambiar y recuperar contraseña
 │       ├── archivos/            #   subida y descarga de fotos
 │       ├── correo/              #   envío de correos (SMTP, o consola en desarrollo)
+│       ├── contacto/            #   formulario de contacto general (CU11)
 │       ├── publicaciones/       #   catálogo público + CRUD del productor
 │       ├── categorias/
 │       ├── favoritos/
@@ -88,8 +89,13 @@ REAL por los primeros bytes (no por la extensión), el nombre lo genera el servi
 al cambiar la clave, las sesiones anteriores dejan de valer. Sin `SMTP_HOST` el correo se imprime en la consola del backend
 (`docker compose logs backend`); para correo real ver `.env.example`.
 
+**Perfil y administración:** `PATCH /api/auth/perfil` (nombre, teléfono, vereda, negocio; nada más). Admin: `GET /api/admin/usuarios?q=&estado=&pagina=`;
+categorías `GET/POST /api/admin/categorias`, `PATCH /:id`, `POST /:id/desactivar {reasignarAId}` (obligatorio si tiene publicaciones), `POST /:id/activar`;
+mensajes `GET /api/admin/mensajes?pendientes=true`, `PATCH /:id/atendido`. Público: `POST /api/contacto` (3 por minuto).
+Las fotos que ninguna publicación usa se borran del disco solas cada 24 h (solo las de más de 24 h).
+
 ## Pruebas
-`cd backend && npm test` — 16 pruebas de integración (necesita la BD `mantalink_test`).
+`cd backend && npm test` — 21 pruebas de integración (necesita la BD `mantalink_test`).
 
 ## Seguridad: qué hay y qué falta
 Hecho: hash bcrypt, JWT con rol/estado verificados en BD en cada petición (suspender tiene efecto inmediato), roles,
@@ -102,5 +108,5 @@ en vez de `synchronize`, copias de seguridad de la BD (RNF Respaldo) y que el fr
 1. Frontend React: catálogo, detalle, login/registro, publicar (portar del mockup)
 2. (hecho en API) panel de moderación en el frontend
 3. (hecho) subida de imágenes · (hecho) recuperar contraseña
-4. Gestión de categorías y usuarios (admin), editar perfil, formulario de contacto, limpiar fotos huérfanas
+4. (hecho) editar perfil, usuarios y categorías del admin, formulario de contacto, limpieza de fotos
 5. Migraciones (hoy `synchronize` crea las tablas), pruebas, despliegue

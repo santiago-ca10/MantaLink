@@ -14,6 +14,7 @@ export default function Ayuda() {
     <section className="screen">
       <div className="section-title"><h3>Centro de ayuda</h3></div>
       {PREGUNTAS.map(([q, a]) => <div className="help-item" key={q}><h4>{q}</h4><p style={{ margin: 0, color: 'var(--ink-soft)' }}>{a}</p></div>)}
+      <p>¿No encuentras lo que buscas? <Link to="/contacto" className="link">Escríbele al equipo</Link>.</p>
       <p><Link to="/privacidad" className="link">Política de privacidad</Link></p>
     </section>
   );

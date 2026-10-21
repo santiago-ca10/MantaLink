@@ -23,7 +23,12 @@ export interface Categoria {
   diasMax: number;
   esEvento: boolean;
   subcategorias: string[];
+  descripcion?: string | null;
+  activa?: boolean;               // solo el admin la ve (las inactivas no salen en el portal)
+  totalPublicaciones?: number;    // solo en la lista del admin
 }
+
+export interface MensajeContacto { id: number; nombre: string; correo: string; asunto: string; mensaje: string; atendido: boolean; creadoEn: string }
 
 export interface ProductorPublico {
   id: string;

@@ -6,7 +6,7 @@ import { IsNull, MoreThan, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { EstadoUsuario, TokenRecuperacion, Usuario } from '../../database/entities';
 import { CorreoService } from '../correo/correo.service';
-import { CambiarContrasenaDto, LoginDto, OlvideContrasenaDto, RegistroDto, RestablecerContrasenaDto } from './dto';
+import { ActualizarPerfilDto, CambiarContrasenaDto, LoginDto, OlvideContrasenaDto, RegistroDto, RestablecerContrasenaDto } from './dto';
 
 const MINUTOS_VIGENCIA = 30; // el documento (CU5) pide que el enlace expire
 const sha256 = (t: string) => createHash('sha256').update(t).digest('hex');
@@ -77,6 +77,18 @@ export class AuthService {
     await this.usuarios.update(t.usuarioId, { contrasenaHash: await bcrypt.hash(dto.nueva, 10), contrasenaCambiadaEn: new Date() });
     await this.tokens.update({ usuarioId: t.usuarioId, usadoEn: IsNull() }, { usadoEn: new Date() });
     return { mensaje: 'Contraseña actualizada. Ya puedes iniciar sesión.' };
+  }
+
+  async actualizarPerfil(id: string, dto: ActualizarPerfilDto) {
+    // texto vacío = borrar el dato (menos el nombre, que es obligatorio)
+    const limpio = (v?: string) => (v === undefined ? undefined : v.trim() || null);
+    const cambios: Partial<Usuario> = {};
+    if (dto.nombre !== undefined) cambios.nombre = dto.nombre.trim();
+    if (dto.telefono !== undefined) cambios.telefono = limpio(dto.telefono) as string;
+    if (dto.vereda !== undefined) cambios.vereda = limpio(dto.vereda) as string;
+    if (dto.nombreNegocio !== undefined) cambios.nombreNegocio = limpio(dto.nombreNegocio) as string;
+    if (Object.keys(cambios).length) await this.usuarios.update(id, cambios);
+    return this.perfil(id);
   }
 
   perfil(id: string) { return this.usuarios.findOneByOrFail({ id }); }

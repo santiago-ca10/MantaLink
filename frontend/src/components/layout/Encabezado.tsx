@@ -36,6 +36,7 @@ export function Encabezado() {
           <div className={`more-dropdown${masAbierto ? ' open' : ''}`}>
             <button onClick={() => navegar('/ayuda')}>? Ayuda</button>
             <button onClick={() => navegar('/configuracion')}>Configuración</button>
+            <button onClick={() => navegar('/contacto')}>Contacto</button>
             <button onClick={() => navegar('/privacidad')}>Privacidad</button>
           </div>
         </div>

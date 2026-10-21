@@ -61,7 +61,7 @@ export class PublicacionesService {
     const u = await this.usuarios.findOneByOrFail({ id: uid });
     if (u.estado !== EstadoUsuario.ACTIVO) throw new ForbiddenException('Tu cuenta aún no ha sido verificada por un administrador');
     const cat = await this.cats.findOneBy({ id: dto.categoriaId });
-    if (!cat) throw new BadRequestException('Categoría no válida');
+    if (!cat || !cat.activa) throw new BadRequestException('Categoría no válida');
     if (dto.subcategoria && cat.subcategorias.length && !cat.subcategorias.includes(dto.subcategoria)) throw new BadRequestException('Subcategoría no válida para esa categoría');
     const p = this.pubs.create({
       titulo: dto.titulo, descripcion: dto.descripcion, precio: dto.precio, subcategoria: dto.subcategoria, imagenes: dto.imagenes ?? [],
