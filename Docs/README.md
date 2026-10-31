@@ -13,6 +13,7 @@ Guías y referencias del proyecto, organizadas por tema:
 - [Backend](../backend/README.md): ejecución, API, pruebas y notas del servidor.
 - [Frontend](../frontend/README.md): ejecución, estructura y scripts de la aplicación React.
 - [README principal](../README.md): introducción, botón al demo y ejecución local con Docker.
+- [Pruebas de sistema](./pruebas-sistema.md): pruebas automatizadas de extremo a extremo con Playwright.
 
 ## Filtros del catálogo
 

@@ -10,7 +10,7 @@ React 18 + TypeScript + Vite + React Router. Consume la API REST del backend (`/
 Cuenta admin de desarrollo: `admin@mail.com` / `admin`. Productores de ejemplo: contraseña `productor123`.
 
 ## Scripts
-- `npm run dev` desarrollo · `npm run build` producción (carpeta `dist/`) · `npm test` pruebas unitarias
+- `npm run dev` desarrollo · `npm run build` producción (carpeta `dist/`) · `npm test` pruebas unitarias · `npm run test:e2e` pruebas de sistema con Playwright (requiere la aplicación levantada con Docker Compose; instalar Chromium con `npx playwright install chromium`)
 
 ## Estructura (`src/`)
 - `api/` cliente HTTP y llamadas al backend · `types/` tipos compartidos
