@@ -11,5 +11,8 @@ export class Categoria {
   // Los eventos se publican con fecha puntual y desaparecen solos al pasar
   @Column({ default: false }) esEvento: boolean;
   @Column('text', { array: true, default: [] }) subcategorias: string[];
+  @Column({ type: 'text', nullable: true }) descripcion: string | null;
+  // Una categoría desactivada no sale en el portal ni acepta ofertas nuevas (CU7); no se borra para conservar el historial
+  @Column({ default: true }) activa: boolean;
   @OneToMany(() => Publicacion, (p) => p.categoria) publicaciones: Publicacion[];
 }

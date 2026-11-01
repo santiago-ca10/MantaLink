@@ -6,5 +6,5 @@ import { Categoria } from '../../database/entities';
 @Injectable()
 export class CategoriasService {
   constructor(@InjectRepository(Categoria) private categorias: Repository<Categoria>) {}
-  listar() { return this.categorias.find({ order: { nombre: 'ASC' } }); }
+  listar() { return this.categorias.find({ where: { activa: true }, order: { nombre: 'ASC' } }); }
 }

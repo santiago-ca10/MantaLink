@@ -4,7 +4,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import * as entities from './database/entities';
+import { AgregarUbicacionPublicacion1792584000000 } from './database/migrations/1792584000000-agregar-ubicacion-publicacion';
+import { AgregarCalificaciones1792584000002 } from './database/migrations/1792584000002-agregar-calificaciones';
 import { AuthModule } from './modules/auth/auth.module';
+import { CorreoModule } from './modules/correo/correo.module';
+import { ContactoModule } from './modules/contacto/contacto.module';
+import { ArchivosModule } from './modules/archivos/archivos.module';
 import { PublicacionesModule } from './modules/publicaciones/publicaciones.module';
 import { CategoriasModule } from './modules/categorias/categorias.module';
 import { FavoritosModule } from './modules/favoritos/favoritos.module';
@@ -20,13 +25,14 @@ export const ENTIDADES = Object.values(entities).filter((e) => typeof e === 'fun
       type: 'postgres',
       url: process.env.DATABASE_URL,
       entities: ENTIDADES as any[],
-      // synchronize solo para desarrollo del MVP: crea las tablas desde las entidades.
-      // Antes de producción hay que pasar a migraciones.
+      migrations: [AgregarUbicacionPublicacion1792584000000, AgregarCalificaciones1792584000002],
+      migrationsRun: process.env.NODE_ENV === 'production',
+      // synchronize solo en desarrollo; producción aplica migraciones explícitas.
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     // Límite general por IP: 120 peticiones/minuto (los endpoints sensibles tienen límites más estrictos)
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 120 }], skipIf: () => process.env.THROTTLE_OFF === '1' }),
-    AuthModule, PublicacionesModule, CategoriasModule, FavoritosModule, ReportesModule, AdministracionModule,
+    AuthModule, PublicacionesModule, CategoriasModule, FavoritosModule, ReportesModule, AdministracionModule, ArchivosModule, CorreoModule, ContactoModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

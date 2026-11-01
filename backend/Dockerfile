@@ -14,6 +14,9 @@ ENV NODE_ENV=development
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist
+# Carpeta de fotos subidas (en compose se monta como volumen para que no se pierdan al recrear el contenedor)
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
+ENV UPLOADS_DIR=/app/uploads
 # No correr como root dentro del contenedor
 USER node
 EXPOSE 3000
